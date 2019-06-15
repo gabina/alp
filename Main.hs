@@ -9,7 +9,7 @@ import Common
 -- "tu culo es lo único redondo/ en este edificio de oficinas/*"
 readPoem :: Parser Poem
 readPoem = do char '*'
-              return ["***"]
+              return []
               <|>
               do v <- readVerse
                  p <- readPoem
