@@ -8,7 +8,7 @@ type Verse = String
 type Poem = [Verse]
 type Syllable = String
 type Metric = [[Int]]
-data Error = IsNotSyllable String | SomethingIsEmpty String deriving Eq
+data Error = IsNotSyllable String | SomethingIsEmpty String deriving (Eq, Show)
 type WithError a = Either Error a
 
 {-Métrica
@@ -33,6 +33,12 @@ isClosed 'i' = True
 isClosed 'u' = True
 isClosed _ = False
 
+isOpened :: Char -> Bool
+isOpened 'a' = True
+isOpened 'e' = True
+isOpened 'o' = True
+isOpened _ = False
+
 vowel :: Parser Char
 vowel = sat isVowel
 
@@ -40,26 +46,35 @@ closed :: Parser Char
 closed = sat isClosed
 
 opened :: Parser Char
-opened = sat (\x -> and [(isVowel x),(not (isClosed x))])
+opened = sat (isOpened)
 
 isNotVowel :: Parser Char
 isNotVowel = sat (\x -> not (isVowel x))
 
+--diptongo al derecho
+{-
 diphthong :: Parser String
 diphthong = do c <- closed
                (do a <- opened
                    return ([c,a])
                    <|> do c1 <- closed
                           return ([c,c1]))
-
-giveVowels :: Syllable -> Syllable
-giveVowels xs = filter isVowel xs
+-}
+--diptongo al revés
+diphthong :: Parser String
+diphthong = do a <- opened
+               c <- closed
+               return ([a,c])
+               <|> do c1 <- closed
+                      c2 <- closed
+                      return ([c1,c2])
 
 haveRhyme :: [WithError Syllable] -> Bool
 haveRhyme [] = True
 haveRhyme (s:syls) = and (map (== s) syls)
 
 -- Consume la última sílaba de un verso al revés
+-- Hasta la última vocal de la sílaba
 lastSyllable :: Parser Syllable
 lastSyllable = do b <- isNotVowel
                   (do d <- diphthong
@@ -81,6 +96,10 @@ lastSyllable' (x:xs) s0 =  if (isVowel x) then (s0,x:xs) else (lastSyllable' xs 
 --lastSyllable :: String -> (String,String)
 --lastSyllable s =  lastSyllable' s ""
 
+giveVowels :: WithError Syllable -> WithError Syllable
+giveVowels (Left e) = Left e 
+giveVowels (Right xs) = Right (filter isVowel xs)
+
 -- retorna la última sílaba de un verso
 giveSyllable :: Verse -> WithError Syllable
 giveSyllable "" = Left (SomethingIsEmpty "Verso vacío")
@@ -90,7 +109,7 @@ giveSyllable s = let s' = reverse s;
 
 
 satisfyMetric' :: Poem -> Metric -> Bool
-satisfyMetric' p ms = let syls = map giveSyllable p;
+satisfyMetric' p ms = let syls = map (giveVowels . giveSyllable) p;
 						  takeSyllables _ [] = [];
 						  takeSyllables s (n:ns) = (s!!n) : (takeSyllables s ns);
 						  rhymes = map (takeSyllables syls) ms
