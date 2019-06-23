@@ -4,7 +4,7 @@ import Parsing
 import Common
 
 -- ::t print
--- run cabal
+-- cabal run
 -- para ingresar un pormea:
 -- "tu culo es lo único redondo/ en este edificio de oficinas/*"
 readPoem :: Parser Poem

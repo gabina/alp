@@ -9,7 +9,7 @@ Modificado por Mauro Jaskelioff
 > import Data.Char
 > import Control.Monad
 > import Control.Applicative hiding (many)
-> 
+>
 
 The monad of parsers
 --------------------
