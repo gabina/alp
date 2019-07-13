@@ -1,0 +1,59 @@
+\documentclass[12pt, a4paper]{article}
+\setlength{\parindent}{0pt}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{multirow} 
+\usepackage{ amssymb }
+\usepackage{amsmath}
+
+\begin{document} 
+\title{Trabajo Práctico Final\\ Análisis de Lenguajes de Programación} 
+\author{Bianchi, Gabina Luz} 
+\maketitle
+
+\section*{Qué es}
+Este trabajo consiste en el desarrollo de la primera versión del programa Méri. Méri es un clasificador automático de poesía en castellano, basándose en la cantidad de versos y los patrones de rima existentes. Actualmente es capaz de identificar:
+\begin{itemize}
+	\item Cuarteto
+	\item Décima
+	\item Lira
+	\item Octava Real
+	\item Redondilla
+	\item Serventesio	
+\end{itemize}
+
+\section*{Algunos conceptos importantes}
+Rima es la repetición de una secuencia de fonemas a partir de la sílaba tónica al final de dos o más versos. Se establece a partir de la última vocal acentuada, incluida ésta.\\
+Existen distintas clasificaciones de rimas. Según su timbre, se pueden encontrar dos tipos distintos:
+\begin{itemize}
+	\item Rima consonante o perfecta: coinciden todos los fonemas a partir de las vocales tónicas. Por ejemplo:
+	
+	\medskip
+	
+	\centering{\textit{selva a su amor, que por el verde su\textbf{elo}\\
+no ha visto al cazador que con desv\textbf{elo}}}
+	\item Rima asonante o imperfecta: coinciden las vocales, pero hay al menos una consonante que no coincide. Por ejemplo:
+	
+	\medskip
+	
+	\centering{\textit{Un nombre de mujer, una blanc\textbf{u}r\textbf{a},\\
+un cuerpo ya sin cara, la pen\textbf{u}mbr\textbf{a}.}}
+\end{itemize}
+
+
+\section*{Posibles Extensiones} 
+
+\section*{Bibliografía}
+ 
+ En este ejercicio se pide resolver el problema de las gausianas diagonales y paralelas, variando la dimensión de éstas, con el clasificador Naive Bayes utilizando distribuciones normales para aproximar las probabilidades. Por lo tanto, para calcular P(a$|$C), siendo \textit{a} un valor para el atributo \textit{i}, y \textit{C} una clase, se utiliza una distribución normal, con media y desviación estándar calculada por clase y por atributo. En la Figura 1 se grafican los errores porcentuales en test en función de la cantidad de dimensiones, para las gaussianas diagonales y paralelas, utilizando cada uno de los clasificadores vistos hasta ahora.
+ 
+
+
+
+
+\end{document}

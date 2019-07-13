@@ -21,11 +21,26 @@ readVerse =  do c <- item
                    then return ""
                    else do l <- readVerse
                            return (c:l)
-                               
-main :: IO ()
 
+options = ["Cuarteto","Decima", "Lira", "Octava Real", "Redondilla", "Serventesio","Soneto"]
+
+    
+printEnum' :: [String] -> Int -> IO (Either String ())
+printEnum' [] _ = return (Right ())
+printEnum' (str:cs) i = do putStrLn (show i ++ " - " ++ str)
+                           printEnum' cs (i+1)
+                          
+printEnum :: [String] -> IO (Either String ())
+printEnum s = printEnum' s 1
+ 
+                            
+main :: IO ()
 main = do   putStrLn "Bienvenido a Méri"    
             putStrLn "Ingrese un poema. Para finalizar presione *"
+            --
+            printEnum options
             x <- getLine
             print x
+            --parse readPoem x
+            --print x
             --putStrLn "Andy!" 
