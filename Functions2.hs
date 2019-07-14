@@ -4,69 +4,10 @@ import Common
 import Parsing
 import Data.Ratio
 import Control.Monad.Writer
-import Data.Set
-import qualified Data.Set as Set
+
 
 showAnswer :: Writer [String] a -> Input ()
 showAnswer a = let (b,xs) = runWriter a in f_out_list xs
-
-{-Conjuntos útiles para separar en sílabas-}
-
-v = fromList ['a','e','i','o','u','á','é','í','ó','ú'] --vocales
-c = fromList ['b','c','d','f','g','h','j','k','l','m','n','ñ','p','q','r','s','t','v','w','x','y','z'] --consonantes
-vs = fromList ['a','e','o'] --vocales fuertes
-vw = fromList['i','u'] --vocales débiles
-vwa = fromList ['í','ú'] --vocales débiles tildadas
-lr = fromList ['l','r']
-
-syllabifier :: String -> [String]
-syllabifier s = syllabifier' s [] ""
-
-{- s es el string a separar en sílabas
-   n es la lista de sílabas
-   t es la sílaba hasta el momento-}
-syllabifier' :: String -> [String] -> String -> [String]
-syllabifier' s0:[] n _ = n
-syllabifier' s0:s1:xs n t = case (hiato s0 s1) of
-								True -> syllabifier' (s1:xs) (n++(t++[s0])) ""
-								False -> case ((member s0 c) && (member s1 v)) of
-											True -> case ((member s0 lr) && (
-
-		#consonante + vocal	
-		if ((S[i] in C) and (S[i+1] in V)):
-			print("Segundo if")
-			if (( S[i] in LR) and (S[i-1] in C)):
-				print("Tercer if")
-				if i>1:
-					print("Cuarto if")
-					N = N + T + "-"
-					T = S[i-1] + S[i]
-				else:
-					print("Cuarto else")
-					T = T + S[i]
-					
-			else:
-				print("Tercer else")
-				N = N + T + "-"
-				T = S[i]
-		else:
-			print("Segundo else")
-			T = T + S[i]
-		
-		print("T: ",T)
-		print(" ")
-	print(N+T+S[i+1])
-
-{- Determina si dos letras forman un hiato -}
-hiato :: Char -> Char -> Bool
-hiato l0 l1 = (((member l0 vs) || (member l0 vwa)) && (member l1 vs))) || ((member l0 v) && (member l1 vwa))
-
-
-
-
-
-
-
 
 {-Métrica
 abba -> [[0,3],[1,2]]
@@ -127,7 +68,7 @@ diphthong = do a <- opened
 -}
 haveRhyme :: [WithError Syllable] -> Bool
 haveRhyme [] = True
-haveRhyme (s:syls) = and (Prelude.map (== s) syls)
+haveRhyme (s:syls) = and (map (== s) syls)
 
 -- Consume la última sílaba de un verso al revés
 -- Hasta la última vocal de la sílaba
@@ -172,10 +113,69 @@ isC1R 'f' = True
 isC1R 'd' = True
 isC1R _ = False
 
+ataqueL' :: Parser Char
+ataqueL' = sat isC1L
+
+ataqueR' :: Parser Char
+ataqueR' = sat isC1R
+
+ataqueL :: Parser String
+ataqueL = do x <- ataqueL'
+             char 'l'
+             return [x,'l']
+             
+ataqueR :: Parser String
+ataqueR = do x <- ataqueR'
+             char 'l'
+             return [x,'l']             
+
+ataque3 :: Parser String
+ataque3 = do c <- isNotVowel
+             char 's'
+             return ([c,'s'])
+             <|> do c <- isNotVowel
+                    return [c]
+
+nucleo :: Parser String
+nucleo = do v <- vowel
+            (do a <- ataque3
+                return (v:a)
+                <|> return [v])
+            <|> do d <- diphthong
+                   (do a <- ataque3
+                       return (d++a)
+                       <|> return d)
+                       
+lastSyllable1 :: Parser String
+lastSyllable1 = do l <- ataqueL
+                   n <- nucleo
+                   return (l++n)
+                   <|>  do r <- ataqueR
+                           n <- nucleo
+                           return (r++n)
+                           <|> do c <- isNotVowel
+                                  n <- nucleo
+                                  return (c:n)
+                                              
+syllable :: Parser [Syllable]
+syllable = do l <- ataqueL
+              n <- nucleo
+              s <- syllable
+              return ((l++n):s)
+              <|>  do r <- ataqueR
+                      n <- nucleo
+                      s <- syllable
+                      return ((r++n):s)
+                      <|>  do c <- isNotVowel
+                              n <- nucleo
+                              s <- syllable
+                              return ((c:n):s)
+                              <|> do ls <- lastSyllable1
+                                     return [ls]
 
 giveVowels :: WithError Syllable -> WithError Syllable
 giveVowels (Left e) = Left e 
-giveVowels (Right xs) = Right (Prelude.filter isVowel xs)
+giveVowels (Right xs) = Right (filter isVowel xs)
 
 -- retorna la última sílaba de un verso
 giveSyllable :: Verse -> WithError Syllable
@@ -185,10 +185,15 @@ giveSyllable s = let s' = reverse s;
 				 in Right (reverse cons)
 
 
-satisfyMetric :: Poem -> Metric -> Bool
-satisfyMetric p ms = let syls = Prelude.map (giveVowels . giveSyllable) p;
+satisfyMetric' :: Poem -> Metric -> Bool
+satisfyMetric' p ms = let syls = map (giveVowels . giveSyllable) p;
 						  takeSyllables _ [] = [];
 						  takeSyllables s (n:ns) = (s!!n) : (takeSyllables s ns);
-						  rhymes = Prelude.map (takeSyllables syls) ms
-					  in and (Prelude.map haveRhyme rhymes)
+						  rhymes = map (takeSyllables syls) ms
+					  in and (map haveRhyme rhymes)
 							  
+
+satisfyMetric :: Poem -> Metric -> WithError Bool
+stisfyMetric [] _ = Left (SomethingIsEmpty "Poema vacío")
+satisfyMetric _ [] = Left (SomethingIsEmpty "Métrica vacía")
+satisfyMetric p m = Right (satisfyMetric' p m)
