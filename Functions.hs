@@ -27,7 +27,7 @@ syllabifier s = syllabifier' s [] ""
    t es la sílaba hasta el momento-}
 syllabifier' :: String -> [String] -> String -> [String]
 syllabifier' s0:[] n _ = n
-syllabifier' s0:s1:xs n t = case (hiato s0 s1) of
+syllabifier' s0:s1:s2:xs n t = case (hiato s0 s1) of
 								True -> syllabifier' (s1:xs) (n++(t++[s0])) ""
 								False -> case ((member s0 c) && (member s1 v)) of
 											True -> case ((member s0 lr) && (
