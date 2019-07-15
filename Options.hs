@@ -16,15 +16,12 @@ cuarteto = do p <- readPoem
 -}
  
 cuarteto :: Input ()
-cuarteto = do f_out "Ingrese un poema. Para finalizar presione *"
+cuarteto = do f_out "Cuarteto"
               p <- get
               showAnswer (cuarteto' p)
               
 cuarteto' :: Poem -> Writer [String] Bool
-cuarteto' p = do if satisfyMetric p [[0,3],[1,2]] then do tell(["Satisface rima"])
-                                                          return True
-                                                  else do tell(["No atisface rima"])
-                                                          return False
+cuarteto' p = satisfyMetric p (Consonante 4 [[0,3],[1,2]]) 
  
 decima :: Input ()
 decima = undefined

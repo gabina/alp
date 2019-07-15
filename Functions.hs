@@ -18,6 +18,7 @@ vs = fromList ['a','e','o'] --vocales fuertes
 vw = fromList['i','u'] --vocales débiles
 vwa = fromList ['í','ú'] --vocales débiles tildadas
 lr = fromList ['l','r']
+vt = fromList ['á','é','í','ó','ú'] -- vocales tildadas
 
 syllabifier :: String -> [String]
 syllabifier s = syllabifier' s [] ""
@@ -26,169 +27,105 @@ syllabifier s = syllabifier' s [] ""
    n es la lista de sílabas
    t es la sílaba hasta el momento-}
 syllabifier' :: String -> [String] -> String -> [String]
-syllabifier' s0:[] n _ = n
-syllabifier' s0:s1:s2:xs n t = case (hiato s0 s1) of
-								True -> syllabifier' (s1:xs) (n++(t++[s0])) ""
-								False -> case ((member s0 c) && (member s1 v)) of
-											True -> case ((member s0 lr) && (
+syllabifier' [] n _ = n
+syllabifier' (s0:[]) n _ = n
+syllabifier' (s0:s1:xs) n t = case (hiato s0 s1) of
+								True -> syllabifier' (s1:xs) (n++[t++[s0]]) ""
+								False -> case (consonantes s0 s1) of
+											True -> syllabifier' xs (n++[t]) [s0,s1]
+											False -> case ((member s0 c) && (member s1 v)) of
+												True -> syllabifier' (s1:xs) (n++[t]) [s0]
+												False -> syllabifier' (s1:xs) n (t++[s0])
 
-		#consonante + vocal	
-		if ((S[i] in C) and (S[i+1] in V)):
-			print("Segundo if")
-			if (( S[i] in LR) and (S[i-1] in C)):
-				print("Tercer if")
-				if i>1:
-					print("Cuarto if")
-					N = N + T + "-"
-					T = S[i-1] + S[i]
-				else:
-					print("Cuarto else")
-					T = T + S[i]
-					
-			else:
-				print("Tercer else")
-				N = N + T + "-"
-				T = S[i]
-		else:
-			print("Segundo else")
-			T = T + S[i]
-		
-		print("T: ",T)
-		print(" ")
-	print(N+T+S[i+1])
+
+{- Determina si dos letras forman un caso especial de consonantes
+c+h - l+l - r+r - consonante+l - consonante+r -}
+
+consonantes :: Char -> Char -> Bool
+consonantes l0 l1 = (((member l0 c) && (member l1 lr)) || ((l0 == 'c') && (l1 == 'h')))
 
 {- Determina si dos letras forman un hiato -}
 hiato :: Char -> Char -> Bool
-hiato l0 l1 = (((member l0 vs) || (member l0 vwa)) && (member l1 vs))) || ((member l0 v) && (member l1 vwa))
-
-
-
-
-
-
+hiato l0 l1 = (((member l0 vs) || (member l0 vwa)) && (member l1 vs)) || ((member l0 v) && (member l1 vwa))
 
 
 {-Métrica
 abba -> [[0,3],[1,2]]
 -} 
 
-{- Esta función quizás no sea necesaria
-giveMetric :: Poem -> WithError Metric
-giveMetric [] = SomethingIsEmpty "Poema vacío"
-giveMetric p = (map giveSyllable p)
--}
-isVowel :: Char -> Bool
-isVowel 'a' = True
-isVowel 'e' = True
-isVowel 'i' = True
-isVowel 'o' = True
-isVowel 'u' = True
-isVowel _ = False
 
-isClosed :: Char -> Bool
-isClosed 'i' = True
-isClosed 'u' = True
-isClosed _ = False
+giveWord' :: Verse -> String -> String
+giveWord' "" w = w
+giveWord' (x:xs) w = if x == ' ' then w else (giveWord' xs (x:w)) 
 
-isOpened :: Char -> Bool
-isOpened 'a' = True
-isOpened 'e' = True
-isOpened 'o' = True
-isOpened _ = False
+{-Retorna la última palabra de un verso-}
+giveLastWord :: Verse -> String
+giveLastWord v = giveWord' (reverse v) ""
 
-vowel :: Parser Char
-vowel = sat isVowel
+{- Retorna el string a partir de encontrar un elemento perteneciente al conjunto -}
+fromThenOn:: String -> Set Char -> String
+fromThenOn "" _ = ""
+fromThenOn (s:xs) c = if (member s c) then (s:xs) else (fromThenOn xs c)
 
-closed :: Parser Char
-closed = sat isClosed
+{- Si hay un tilde en el string, retorna a partir de la vocal acentuada.
+   Si no, retortna el string vacío -}
+vocalTildada :: String -> String
+vocalTildada s = fromThenOn s vt
 
-opened :: Parser Char
-opened = sat (isOpened)
+{- Para palabras sin tildes:
+   si termina en n, s o vocal, hay que retornar la penúltima sílaba a partir de la vocal + la última sílaba
+   en caso contrario, hay que retornar desde la vocal de la última sílaba -}
+vocalTonica :: [String] -> String
+vocalTonica xs = let lastSyl = last xs;
+					 lastLetter = last lastSyl;
+					 penSyl = last (init xs);
+					 grave = (member lastLetter v) || (lastLetter == 'n') || (lastLetter == 's')
+				 in case grave of
+					True -> fromThenOn (penSyl++lastSyl) v
+					False -> fromThenOn lastSyl v
+   
+{-Retorna las sílabas a partir de la vocal tónica -}
+giveTonica :: [String] -> String
+giveTonica s = let s' = concat s;
+				   t = vocalTildada s'
+			   in if t == "" then vocalTonica s else t	
 
-isNotVowel :: Parser Char
-isNotVowel = sat (\x -> not (isVowel x))
 
---diptongo al derecho
-diphthong :: Parser String
-diphthong = do c <- closed
-               (do a <- opened
-                   return ([c,a])
-                   <|> do c1 <- closed
-                          return ([c,c1]))
-
---diptongo al revés
-{-diphthong :: Parser String
-diphthong = do a <- opened
-               c <- closed
-               return ([a,c])
-               <|> do c1 <- closed
-                      c2 <- closed
-                      return ([c1,c2])
--}
-haveRhyme :: [WithError Syllable] -> Bool
+haveRhyme :: [String] -> Bool
 haveRhyme [] = True
 haveRhyme (s:syls) = and (Prelude.map (== s) syls)
 
--- Consume la última sílaba de un verso al revés
--- Hasta la última vocal de la sílaba
-lastSyllable :: Parser Syllable
-lastSyllable = do b <- isNotVowel
-                  (do d <- diphthong
-                      return (b:d)
-                      <|> do a <- vowel
-                             return ([b,a]))
-                  <|> do d <- diphthong
-                         return (d)
-                  <|> do a <- vowel
-                         return ([a])
-                  
-{-
-lastSillable' :: String -> String -> (String,String)
-lastSyllable' "" s0 = (s0,s1)
-lastSyllable' (x:xs) s0 =  if (isVowel x) then (s0,x:xs) else (lastSyllable' xs (s0++[x]))
--}
-
--- devuelve una tupla (consonantes hasta la primera vocal, el resto)
---lastSyllable :: String -> (String,String)
---lastSyllable s =  lastSyllable' s ""
-
--- Parsear sílabas
-isC1L :: Char -> Bool
-isC1L 'g' = True
-isC1L 'k' = True
-isC1L 't' = True
-isC1L 'b' = True
-isC1L 'p' = True
-isC1L 'f' = True
-isC1L _ = False
-
-isC1R :: Char -> Bool
-isC1R 'g' = True
-isC1R 'k' = True
-isC1R 't' = True
-isC1R 'b' = True
-isC1R 'p' = True
-isC1R 'f' = True
-isC1R 'd' = True
-isC1R _ = False
+satisfyMetric :: Poem -> Metric -> Writer [String] Bool
+satisfyMetric p (Consonante n ms) = case (mod length(p) n) of
+										0 -> do tell (["Cantidad de versos adecuada"]
+												let syls = Prelude.map (giveTonica . syllabifier . giveLastWord) p;
+													takeSyllables _ [] = [];
+													takeSyllables s (x:xs) = (s!!x) : (takeSyllables s xs);
+													rhymes = Prelude.map (takeSyllables syls) ms
+												return (and (Prelude.map haveRhyme rhymes))
+										_ -> do tell (["Sobran "++show(mod length(p) n)++" versos o faltan "++show(n- (mod length(p) n))++" versos"]) 
+										        return False
 
 
-giveVowels :: WithError Syllable -> WithError Syllable
-giveVowels (Left e) = Left e 
-giveVowels (Right xs) = Right (Prelude.filter isVowel xs)
-
--- retorna la última sílaba de un verso
-giveSyllable :: Verse -> WithError Syllable
-giveSyllable "" = Left (SomethingIsEmpty "Verso vacío")
-giveSyllable s = let s' = reverse s;
-					 [(cons,rest)] = parse lastSyllable s'					 
-				 in Right (reverse cons)
+{-                                                let syls = Prelude.map (giveTonica . syllabifier . giveLastWord) p;
+													takeSyllables _ [] = [];
+													takeSyllables s (x:xs) = (s!!x) : (takeSyllables s xs);
+													rhymes = Prelude.map (takeSyllables syls) ms
+												in return (and (Prelude.map haveRhyme rhymes)) -}
 
 
-satisfyMetric :: Poem -> Metric -> Bool
-satisfyMetric p ms = let syls = Prelude.map (giveVowels . giveSyllable) p;
-						  takeSyllables _ [] = [];
-						  takeSyllables s (n:ns) = (s!!n) : (takeSyllables s ns);
-						  rhymes = Prelude.map (takeSyllables syls) ms
-					  in and (Prelude.map haveRhyme rhymes)
-							  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

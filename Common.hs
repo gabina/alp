@@ -7,7 +7,7 @@ import Parsing
 type Verse = String
 type Poem = [Verse]
 type Syllable = String
-type Metric = [[Int]]
+data Metric = Asonante Int [[Int]] | Consonante Int [[Int]]
 data Error = IsNotSyllable String | SomethingIsEmpty String deriving (Eq, Show)
 type WithError a = Either Error a
 
