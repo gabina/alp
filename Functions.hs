@@ -28,7 +28,7 @@ syllabifier s = syllabifier' s [] ""
    t es la sílaba hasta el momento-}
 syllabifier' :: String -> [String] -> String -> [String]
 syllabifier' [] n _ = n
-syllabifier' (s0:[]) n _ = n
+syllabifier' (s0:[]) n t = n++[t++[s0]]
 syllabifier' (s0:s1:xs) n t = case (hiato s0 s1) of
 								True -> syllabifier' (s1:xs) (n++[t++[s0]]) ""
 								False -> case (consonantes s0 s1) of
@@ -74,7 +74,8 @@ vocalTildada s = fromThenOn s vt
 
 {- Para palabras sin tildes:
    si termina en n, s o vocal, hay que retornar la penúltima sílaba a partir de la vocal + la última sílaba
-   en caso contrario, hay que retornar desde la vocal de la última sílaba -}
+   en caso contrario, hay que retornar desde la vocal de la última sílaba 
+   Rever el caso en que se tiene "qu"-}
 vocalTonica :: [String] -> String
 vocalTonica xs = let lastSyl = last xs;
 					 lastLetter = last lastSyl;
@@ -111,33 +112,17 @@ satisfyMetric :: Poem -> Metric -> Writer [String] Bool
 satisfyMetric p (Consonante n ms) = let verses =  (mod (length p) n) in 
 									case verses of
 										0 -> do tell (["Cantidad de versos adecuada"])
-										        f (Control.Monad.Writer.sequence (Prelude.map haveRhyme rhymes))	
+										        b <- f (Control.Monad.Writer.sequence (Prelude.map haveRhyme rhymes))
+										        if b then do tell (["Satisface rima"])
+										                     return b
+										             else return b	
 										    where syls = Prelude.map (giveTonica . syllabifier . giveLastWord) p
 										          rhymes = Prelude.map (takeSyllables syls)	ms									
 										_ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
 										        return False
 
 
-{-                                                let syls = Prelude.map (giveTonica . syllabifier . giveLastWord) p;
-													takeSyllables _ [] = [];
-													takeSyllables s (x:xs) = (s!!x) : (takeSyllables s xs);
-													rhymes = Prelude.map (takeSyllables syls) ms
-												in return (and (Prelude.map haveRhyme rhymes)) -}
-
-
-
-
-{-												let syls = Prelude.map (giveTonica . syllabifier . giveLastWord) p
-												let takeSyllables _ [] = []
-												let takeSyllables s (x:xs) = (s!!x) : (takeSyllables s xs)
-												let rhymes = Prelude.map (takeSyllables syls) ms
-												-}
-												
-
-
-
-
-
+{-"me zumba la poronga fluoerscente/como espada de jedi con estática/me hierve la capacidad espermática /las bolas repletísimas de gente/*" -}
 
 
 
