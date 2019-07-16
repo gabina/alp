@@ -17,7 +17,7 @@ c = fromList ['b','c','d','f','g','h','j','k','l','m','n','ñ','p','q','r','s','
 vs = fromList ['a','e','o'] --vocales fuertes
 vw = fromList['i','u'] --vocales débiles
 vwa = fromList ['í','ú'] --vocales débiles tildadas
-lr = fromList ['l','r']
+lr = fromList ['l','r'] --consonantes especiales
 vt = fromList ['á','é','í','ó','ú'] -- vocales tildadas
 
 syllabifier :: String -> [String]
@@ -90,21 +90,28 @@ giveTonica s = let s' = concat s;
 				   t = vocalTildada s'
 			   in if t == "" then vocalTonica s else t	
 
+f :: Writer [String] [Bool] -> Writer [String] Bool 
+f w = let (boolList,s) = runWriter w in writer (and boolList, s)
 
-haveRhyme :: [String] -> Bool
-haveRhyme [] = True
-haveRhyme (s:syls) = and (Prelude.map (== s) syls)
+equalSyll :: String -> Int -> (Int,String) -> Writer [String] Bool
+equalSyll s0 n0 (n1,s1) = if s0==s1 then return True 
+							     else do tell(["Fallo en rima versos "++show(n0)++" y "++show(n1)])
+							             return False
+
+haveRhyme :: [(Int,String)] -> Writer [String] Bool
+haveRhyme [] = return True
+haveRhyme ((n0,s0):syls) =  f (Control.Monad.Writer.sequence (Prelude.map (equalSyll s0 n0) syls))
 
 {- Dada una lista de sílabas y una lista de enteros indicando qué sílabas deben rimar, devuelve la lista de las sílabas -}
-takeSyllables :: [String] -> [Int] -> [String]
+takeSyllables :: [String] -> [Int] -> [(Int,String)]
 takeSyllables _ [] = []
-takeSyllables s (x:xs) = (s!!x) : (takeSyllables s xs)
+takeSyllables s (x:xs) = (x,(s!!x)) : (takeSyllables s xs)
 
 satisfyMetric :: Poem -> Metric -> Writer [String] Bool
 satisfyMetric p (Consonante n ms) = let verses =  (mod (length p) n) in 
 									case verses of
 										0 -> do tell (["Cantidad de versos adecuada"])
-										        return (and (Prelude.map haveRhyme rhymes))	
+										        f (Control.Monad.Writer.sequence (Prelude.map haveRhyme rhymes))	
 										    where syls = Prelude.map (giveTonica . syllabifier . giveLastWord) p
 										          rhymes = Prelude.map (takeSyllables syls)	ms									
 										_ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
