@@ -95,15 +95,19 @@ haveRhyme :: [String] -> Bool
 haveRhyme [] = True
 haveRhyme (s:syls) = and (Prelude.map (== s) syls)
 
+{- Dada una lista de sílabas y una lista de enteros indicando qué sílabas deben rimar, devuelve la lista de las sílabas -}
+takeSyllables :: [String] -> [Int] -> [String]
+takeSyllables _ [] = []
+takeSyllables s (x:xs) = (s!!x) : (takeSyllables s xs)
+
 satisfyMetric :: Poem -> Metric -> Writer [String] Bool
-satisfyMetric p (Consonante n ms) = case (mod length(p) n) of
-										0 -> do tell (["Cantidad de versos adecuada"]
-												let syls = Prelude.map (giveTonica . syllabifier . giveLastWord) p;
-													takeSyllables _ [] = [];
-													takeSyllables s (x:xs) = (s!!x) : (takeSyllables s xs);
-													rhymes = Prelude.map (takeSyllables syls) ms
-												return (and (Prelude.map haveRhyme rhymes))
-										_ -> do tell (["Sobran "++show(mod length(p) n)++" versos o faltan "++show(n- (mod length(p) n))++" versos"]) 
+satisfyMetric p (Consonante n ms) = let verses =  (mod (length p) n) in 
+									case verses of
+										0 -> do tell (["Cantidad de versos adecuada"])
+										        return (and (Prelude.map haveRhyme rhymes))	
+										    where syls = Prelude.map (giveTonica . syllabifier . giveLastWord) p
+										          rhymes = Prelude.map (takeSyllables syls)	ms									
+										_ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
 										        return False
 
 
@@ -116,9 +120,12 @@ satisfyMetric p (Consonante n ms) = case (mod length(p) n) of
 
 
 
-
-
-
+{-												let syls = Prelude.map (giveTonica . syllabifier . giveLastWord) p
+												let takeSyllables _ [] = []
+												let takeSyllables s (x:xs) = (s!!x) : (takeSyllables s xs)
+												let rhymes = Prelude.map (takeSyllables syls) ms
+												-}
+												
 
 
 
