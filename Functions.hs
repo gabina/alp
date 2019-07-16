@@ -53,6 +53,8 @@ hiato l0 l1 = (((member l0 vs) || (member l0 vwa)) && (member l1 vs)) || ((membe
 abba -> [[0,3],[1,2]]
 -} 
 
+giveVowels :: String -> String
+giveVowels s = Prelude.filter (\x -> member x v) s
 
 giveWord' :: Verse -> String -> String
 giveWord' "" w = w
@@ -109,7 +111,7 @@ takeSyllables _ [] = []
 takeSyllables s (x:xs) = (x,(s!!x)) : (takeSyllables s xs)
 
 satisfyMetric :: Poem -> Metric -> Writer [String] Bool
-satisfyMetric p (Consonante n ms) = let verses =  (mod (length p) n) in 
+satisfyMetric p (Consonante n ms) = let verses = (mod (length p) n) in 
 									case verses of
 										0 -> do tell (["Cantidad de versos adecuada"])
 										        b <- f (Control.Monad.Writer.sequence (Prelude.map haveRhyme rhymes))
@@ -120,7 +122,17 @@ satisfyMetric p (Consonante n ms) = let verses =  (mod (length p) n) in
 										          rhymes = Prelude.map (takeSyllables syls)	ms									
 										_ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
 										        return False
-
+satisfyMetric p (Asonante n ms) = let verses = (mod (length p) n) in 
+									case verses of
+										0 -> do tell (["Cantidad de versos adecuada"])
+										        b <- f (Control.Monad.Writer.sequence (Prelude.map haveRhyme rhymes))
+										        if b then do tell (["Satisface rima"])
+										                     return b
+										             else return b	
+										    where syls = Prelude.map (giveVowels . giveTonica . syllabifier . giveLastWord) p
+										          rhymes = Prelude.map (takeSyllables syls)	ms									
+										_ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
+										        return False
 
 {-"me zumba la poronga fluoerscente/como espada de jedi con estática/me hierve la capacidad espermática /las bolas repletísimas de gente/*" -}
 
