@@ -2,12 +2,15 @@ module Common where
 
 import Control.Monad
 import System.IO (hFlush, stdout)
+
 import Parsing
+import Data.Set
+import qualified Data.Set as Set
 
 type Verse = String
 type Poem = [Verse]
 type Syllable = String
-data Metric = Asonante Int [[Int]] | Consonante Int [[Int]]
+data Metric = Asonante Int (Set (Set Int)) | Consonante Int (Set (Set Int))
 data Error = IsNotSyllable String | SomethingIsEmpty String deriving (Eq, Show)
 type WithError a = Either Error a
 

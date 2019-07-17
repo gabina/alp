@@ -5,6 +5,8 @@ import Functions
 import Parsers
 import Control.Monad.Writer
 import qualified Data.Text.IO as Txt
+import Data.Set
+import qualified Data.Set as Set
 
 {-Cuarteto: estrofa de cuatro versos, normalmente endecası́labos, con patrón de rima consonante abba -}  
 cuarteto :: Input ()
@@ -13,7 +15,7 @@ cuarteto = do f_out "Cuarteto"
               showAnswer (cuarteto' p)
               
 cuarteto' :: Poem -> Writer [String] Bool
-cuarteto' p = satisfyMetric p (Consonante 4 [[0,3],[1,2]]) 
+cuarteto' p = satisfyMetric p (Consonante 4 (fromList (Prelude.map fromList [[0,3],[1,2]]))) 
 
 {-Redondilla: estrofa de cuatro versos, normalmente osctasílabos, con patrón de rima consonante abba-}
 redondilla :: Input ()
@@ -22,7 +24,7 @@ redondilla = do f_out "Redondilla"
                 showAnswer (redondilla' p)
               
 redondilla' :: Poem -> Writer [String] Bool
-redondilla' p = satisfyMetric p (Consonante 4 [[0,3],[1,2]]) 
+redondilla' p = satisfyMetric p (Consonante 4 (fromList (Prelude.map fromList[[0,3],[1,2]]))) 
 
 {-Seguidilla: estrofa de arte menor formada por cuatro versos. Los impares, heptası́labos y libres, y los pares, pentası́labos con rima asonante. El patrón de rima es abcb -}
 seguidilla :: Input ()
@@ -31,7 +33,7 @@ seguidilla = do f_out "Seguidilla"
                 showAnswer (seguidilla' p)
               
 seguidilla' :: Poem -> Writer [String] Bool
-seguidilla' p = satisfyMetric p (Asonante 4 [[1,3]]) 
+seguidilla' p = satisfyMetric p (Asonante 4 (fromList (Prelude.map fromList [[1,3]]))) 
 
 {-Romance:  estrofa de arte menor formada por cuatro versos octosílabos, con el primero y el tercero libres, y el segundo y cuarto con rima asonante.-}
 romance :: Input ()
@@ -40,7 +42,7 @@ romance = do f_out "Romance"
              showAnswer (romance' p)
               
 romance' :: Poem -> Writer [String] Bool
-romance' p = satisfyMetric p (Asonante 4 [[1,3]]) 
+romance' p = satisfyMetric p (Asonante 4 (fromList (Prelude.map fromList [[1,3]]))) 
 
 {-Soneto: es una composición poética compuesta por catorce versos de arte mayor, endecası́labos en su forma clásica. Admite distintos patrones de rima, según la época y el autor. En este caso se considerará uno de los más utilizados: abbacddceffegg-}
 soneto :: Input ()
@@ -49,7 +51,7 @@ soneto = do f_out "Serventesio"
             showAnswer (decima' p)
 
 soneto' :: Poem -> Writer [String] Bool
-soneto' p = satisfyMetric p (Consonante 14 [[0,3],[1,2],[4,7],[5,6],[8,11],[9,10],[12,13]]) 
+soneto' p = satisfyMetric p (Consonante 14 (fromList (Prelude.map fromList [[0,3],[1,2],[4,7],[5,6],[8,11],[9,10],[12,13]]))) 
 
 {-Décima: estrofa constituida por diez versos octosı́labos. La estructura de rimas es fija en en abbaaccddc-}
 decima :: Input ()
@@ -58,7 +60,7 @@ decima = do f_out "Décima"
             showAnswer (decima' p)
  
 decima' :: Poem -> Writer [String] Bool
-decima' p = satisfyMetric p (Consonante 10 [[0,3,4],[1,2],[5,6,9],[7,8]]) 
+decima' p = satisfyMetric p (Consonante 10 (fromList (Prelude.map fromList [[0,3,4],[1,2],[5,6,9],[7,8]]))) 
 
 {-Patrones no utilizados -} 
 lira :: Input ()
@@ -67,7 +69,7 @@ lira = do f_out "Lira"
           showAnswer (decima' p)
 
 lira' :: Poem -> Writer [String] Bool
-lira' p = satisfyMetric p (Consonante 5 [[0,2],[1,3,4]]) 
+lira' p = satisfyMetric p (Consonante 5 (fromList (Prelude.map fromList [[0,2],[1,3,4]]))) 
 
 octava :: Input ()
 octava = do f_out "Octava Real"
@@ -75,7 +77,7 @@ octava = do f_out "Octava Real"
             showAnswer (decima' p)
 
 octava' :: Poem -> Writer [String] Bool
-octava' p = satisfyMetric p (Consonante 8 [[0,2,4],[1,3,5],[6,7]])  
+octava' p = satisfyMetric p (Consonante 8 (fromList (Prelude.map fromList [[0,2,4],[1,3,5],[6,7]])))  
 
   
  
@@ -85,7 +87,7 @@ serventesio = do f_out "Serventesio"
                  showAnswer (decima' p)
 
 serventesio' :: Poem -> Writer [String] Bool
-serventesio' p = satisfyMetric p (Consonante 4 [[0,2],[1,3]]) 
+serventesio' p = satisfyMetric p (Consonante 4 (fromList (Prelude.map fromList [[0,2],[1,3]]))) 
 
 
 

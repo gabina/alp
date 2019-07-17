@@ -106,31 +106,34 @@ haveRhyme [] = return True
 haveRhyme ((n0,s0):syls) =  f (Control.Monad.Writer.sequence (Prelude.map (equalSyll s0 n0) syls))
 
 {- Dada una lista de sílabas y una lista de enteros indicando qué sílabas deben rimar, devuelve la lista de las sílabas -}
-takeSyllables :: [String] -> [Int] -> [(Int,String)]
-takeSyllables _ [] = []
-takeSyllables s (x:xs) = (x,(s!!x)) : (takeSyllables s xs)
+takeSyllables' :: [String] -> [Int] -> [(Int,String)]
+takeSyllables' _ [] = []
+takeSyllables' s (x:xs) = (x,(s!!x)) : (takeSyllables' s xs)
+
+takeSyllables :: [String] -> Set Int -> [(Int,String)]
+takeSyllables s verses = takeSyllables' s (toList verses)
 
 satisfyMetric :: Poem -> Metric -> Writer [String] Bool
 satisfyMetric p (Consonante n ms) = let verses = (mod (length p) n) in 
 									case verses of
 										0 -> do tell (["Cantidad de versos adecuada"])
-										        b <- f (Control.Monad.Writer.sequence (Prelude.map haveRhyme rhymes))
+										        b <- f (Control.Monad.Writer.sequence (toList (Set.map haveRhyme rhymes)))
 										        if b then do tell (["Satisface rima"])
 										                     return b
 										             else return b	
 										    where syls = Prelude.map (giveTonica . syllabifier . giveLastWord) p
-										          rhymes = Prelude.map (takeSyllables syls)	ms									
+										          rhymes = Set.map (takeSyllables syls)	ms									
 										_ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
 										        return False
 satisfyMetric p (Asonante n ms) = let verses = (mod (length p) n) in 
 									case verses of
 										0 -> do tell (["Cantidad de versos adecuada"])
-										        b <- f (Control.Monad.Writer.sequence (Prelude.map haveRhyme rhymes))
+										        b <- f (Control.Monad.Writer.sequence (toList (Set.map haveRhyme rhymes)))
 										        if b then do tell (["Satisface rima"])
 										                     return b
 										             else return b	
 										    where syls = Prelude.map (giveVowels . giveTonica . syllabifier . giveLastWord) p
-										          rhymes = Prelude.map (takeSyllables syls)	ms									
+										          rhymes = Set.map (takeSyllables syls)	ms									
 										_ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
 										        return False
 
