@@ -17,17 +17,11 @@
 \maketitle
 
 \section*{Qué es}
-Este trabajo consiste en el desarrollo de la primera versión del programa Méri. Méri es un clasificador automático de poesía en castellano, basándose en la cantidad de versos y los patrones de rima existentes. Actualmente es capaz de identificar:
-\begin{itemize}
-	\item Cuarteto
-	\item Décima
-	\item Lira
-	\item Octava Real
-	\item Redondilla
-	\item Serventesio	
-\end{itemize}
-
+Este trabajo consiste en el desarrollo de la primera versión del programa Méri. Méri es un clasificador automático de poesía en castellano, que se basa en la cantidad de versos y los patrones de rima existentes. Actualmente es capaz de identificar: redondilla, cuarteto, seguidilla, romance, soneto y décima.	
+Sin embargo, como se explicará más adelante, se podrían agregar nuevas estructuras poéticas de manera muy sencilla.
 \section*{Algunos conceptos importantes}
+A fin de poder entender con mayor profundidad el funcionamiento y desarrollo de este proyecto, se presentan algunas definiciones básicas sobre el dominio específico en cuestión: la poesía.
+\subsection*{Rima}
 Rima es la repetición de una secuencia de fonemas a partir de la sílaba tónica al final de dos o más versos. Se establece a partir de la última vocal acentuada, incluida ésta.\\
 Existen distintas clasificaciones de rimas. Según su timbre, se pueden encontrar dos tipos distintos:
 \begin{itemize}
@@ -35,23 +29,59 @@ Existen distintas clasificaciones de rimas. Según su timbre, se pueden encontra
 	
 	\medskip
 	
-	\centering{\textit{selva a su amor, que por el verde su\textbf{elo}\\
-no ha visto al cazador que con desv\textbf{elo}}}
+	\begin{center}
+		\textit{selva a su amor, que por el verde su\textbf{elo}\\ no ha visto al cazador que con desv\textbf{elo}}
+	\end{center}	 
+
 	\item Rima asonante o imperfecta: coinciden las vocales, pero hay al menos una consonante que no coincide. Por ejemplo:
 	
 	\medskip
 	
-	\centering{\textit{Un nombre de mujer, una blanc\textbf{u}r\textbf{a},\\
-un cuerpo ya sin cara, la pen\textbf{u}mbr\textbf{a}.}}
+	\begin{center}
+			\textit{Un nombre de mujer, una blanc\textbf{u}r\textbf{a},\\un cuerpo ya sin cara, la pen\textbf{u}mbr\textbf{a}.}	
+	\end{center}
+
 \end{itemize}
 
+\subsection*{Patrones de rima}
+A continuación se presentan las características principales de las estructuras poéticas consideradas en el proyecto. Es importante destacar que, en esta versión, el programa no es capaz de identificar cada una de las propiedades, sino que analiza únicamente cantidad de versos y esquemas de rima, dejando para una extensión futura la métrica de cada verso.
+\begin{itemize}
+	\item Redondilla: estrofa de cuatro versos, normalmente osctasílabos, con patrón de rima consonante \textit{abba}
+	\item Cuarteto: estrofa de cuatro versos, normalmente endecasílabos, con patrón de rima consonante \textit{abba}
+	\item Seguidilla: estrofa de arte menor formada por cuatro versos. Los impares, heptasílabos y libres, y los pares, pentasílabos con rima asonante. El patrón de rima es \textit{abcb}.
+	\item Romance: estrofa de arte menor formada por cuatro versos octosílabos, con el primero y el tercero libres, y el segundo y cuarto con rima asonante. El patrón de rima es \textit{abcb}.
+	\item Soneto: es una composición poética compuesta por catorce versos de arte mayor, endecasílabos en su forma clásica. Admite distintos patrones de rima, según la época y el autor. En este caso se considerará uno de los más utilizados: \textit{abbacddceffegg}\footnote{Basado en libros de sonetos actuales.}.
+	\item Décima:  estrofa constituida por diez versos octosílabos. La estructura de rimas es fija en en \textit{abbaaccddc}. 
+
+\end{itemize}
+
+\section*{Instalación y modo de uso}
+Para poder utilizar el software primero se deben descargar los archivos fuentes del siguiente repositorio: \url{https://github.com/gabina/alp}, y tener instalado el sistema de paquetes Cabal\footnote{Cabal es un sistema de paquetes de Haskell que permite a los desarrolladores y usuarios distribuír, usar y reutilizar software fácilmente.}. Luego, deben ejecutarse en una terminal los siguientes comandos:
+\begin{verbatim}
+      $ cabal install
+      $ cabal run
+\end{verbatim}
+
+Una vez iniciado Méri, se debe elegir la opción correspondiente al tipo de poema que se desea verificar, y luego ingresar el poema. Éste debe ser escrito en una misma línea, separando los versos con una barra (/), e indicando el fin del poema con un asterisco (*). Por ejemplo:
+\begin{verbatim}
+     soy el que baja al chino de la cuadra/ con lluvia con 
+     burbujas en los charcos/ saludando a porteros medios 
+     parcos/ y al perro del florista que me ladra/*
+\end{verbatim}\footnote{Extracto de un soneto de Pedro Mairal}
+\section*{Méri por adentro}
+En esta sección se presentarán con detalle las ideas principales sobre el diseño y funcionamiento de Méri.
+
+\section*{•}
+
+\subsection*{Casos de prueba}
 
 \section*{Posibles Extensiones} 
 
 \section*{Bibliografía}
- 
- En este ejercicio se pide resolver el problema de las gausianas diagonales y paralelas, variando la dimensión de éstas, con el clasificador Naive Bayes utilizando distribuciones normales para aproximar las probabilidades. Por lo tanto, para calcular P(a$|$C), siendo \textit{a} un valor para el atributo \textit{i}, y \textit{C} una clase, se utiliza una distribución normal, con media y desviación estándar calculada por clase y por atributo. En la Figura 1 se grafican los errores porcentuales en test en función de la cantidad de dimensiones, para las gaussianas diagonales y paralelas, utilizando cada uno de los clasificadores vistos hasta ahora.
- 
+ \begin{itemize}
+ 	\item Wikipedia
+ 	\item A Syllabification Algorithm for Spanish. Heriberto Cuayahuitl
+ \end{itemize}
 
 
 

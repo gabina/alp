@@ -10,7 +10,7 @@ import qualified Data.Text.IO as Txt
 -- para ingresar un pormea:
 -- "tu culo es lo único redondo/ en este edificio de oficinas/*"
 
-options = [("Cuarteto",cuarteto),("Decima",decima), ("Lira",lira), ("Octava Real",octava), ("Redondilla",redondilla), ("Serventesio",serventesio),("Soneto",soneto)]
+options = [("Cuarteto",cuarteto),("Redondilla",redondilla), ("Seguidilla",seguidilla), ("Romance",romance),("Soneto",soneto), ("Decima",decima)]
 
     
 printEnum' :: [(String, Input ())] -> Int -> IO (Either String ())

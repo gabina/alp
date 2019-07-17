@@ -4,7 +4,7 @@
 name:                Trabajo-Final
 version:             0.1.0.0
 -- synopsis:            
--- description:         
+description:		 Méri es un clasificador de poesía automático, que se basa en la cantidad de versos y en los patrones de rima existentes. Actualmente es capaz de identificar redondilla, cuarteto, seguidilla, romance, soneto y décima.         
 -- license:             
 license-file:        LICENSE
 author:              Gabina
