@@ -8,7 +8,7 @@ import Data.Set
 import qualified Data.Set as Set
 
 showAnswer :: Writer [String] a -> Input ()
-showAnswer a = let (b,xs) = runWriter a in f_out_list xs
+showAnswer m = f_out_list (execWriter m)
 
 {-Conjuntos útiles para separar en sílabas-}
 
