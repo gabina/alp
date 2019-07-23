@@ -17,7 +17,7 @@
 \maketitle
 
 \section*{Qué es}
-Este trabajo consiste en el desarrollo de la primera versión del programa Méri. Méri es un clasificador automático de poesía en castellano, que se basa en la cantidad de versos y los patrones de rima existentes. Actualmente es capaz de identificar: redondilla, cuarteto, seguidilla, romance, soneto y décima.	
+Este trabajo consiste en el desarrollo de la primera versión del programa Méri. Méri es un identificador de tipos de poesía en castellano, que se basa en la cantidad de versos y los patrones de rima existentes. Actualmente es capaz de identificar: redondilla, cuarteto, seguidilla, romance, soneto y décima.	
 Sin embargo, como se explicará más adelante, se podrían agregar nuevas estructuras poéticas de manera muy sencilla.
 \section*{Algunos conceptos importantes}
 A fin de poder entender con mayor profundidad el funcionamiento y desarrollo de este proyecto, se presentan algunas definiciones básicas sobre el dominio específico en cuestión: la poesía.
@@ -33,7 +33,7 @@ Existen distintas clasificaciones de rimas. Según su timbre, se pueden encontra
 		\textit{selva a su amor, que por el verde su\textbf{elo}\\ no ha visto al cazador que con desv\textbf{elo}}
 	\end{center}	 
 
-	\item Rima asonante o imperfecta: coinciden las vocales, pero hay al menos una consonante que no coincide. Por ejemplo:
+	\item Rima asonante o imperfecta: coinciden las vocales, pero hay al menos una consonante que no coincide\footnote{En este trabajo se considera a la rima consonante como un caso particular de rima asonante, ya que muchos esquemas de rimas no son estrictos en este sentido.}. Por ejemplo:
 	
 	\medskip
 	
@@ -47,11 +47,11 @@ Existen distintas clasificaciones de rimas. Según su timbre, se pueden encontra
 A continuación se presentan las características principales de las estructuras poéticas consideradas en el proyecto. Es importante destacar que, en esta versión, el programa no es capaz de identificar cada una de las propiedades, sino que analiza únicamente cantidad de versos y esquemas de rima, dejando para una extensión futura la métrica de cada verso.
 \begin{itemize}
 	\item Redondilla: estrofa de cuatro versos, normalmente osctasílabos, con patrón de rima consonante \textit{abba}
-	\item Cuarteto: estrofa de cuatro versos, normalmente endecasílabos, con patrón de rima consonante \textit{abba}
+	\item Cuarteto\footnote{Por lo mencionado anteriormente, en esta versión de Méri, la redondilla y el cuarteto utilizan la misma métrica, ya que el programa no está preparado para diferenciar la cantidad de sílabas de cada verso.} estrofa de cuatro versos, normalmente endecasílabos, con patrón de rima consonante \textit{abba}
 	\item Seguidilla: estrofa de arte menor formada por cuatro versos. Los impares, heptasílabos y libres, y los pares, pentasílabos con rima asonante. El patrón de rima es \textit{abcb}.
 	\item Romance: estrofa de arte menor formada por cuatro versos octosílabos, con el primero y el tercero libres, y el segundo y cuarto con rima asonante. El patrón de rima es \textit{abcb}.
 	\item Soneto: es una composición poética compuesta por catorce versos de arte mayor, endecasílabos en su forma clásica. Admite distintos patrones de rima, según la época y el autor. En este caso se considerará uno de los más utilizados: \textit{abbacddceffegg}\footnote{Basado en libros de sonetos actuales.}.
-	\item Décima:  estrofa constituida por diez versos octosílabos. La estructura de rimas es fija en en \textit{abbaaccddc}. 
+	\item Décima:  estrofa constituida por diez versos octosílabos. La estructura de rimas es fija en \textit{abbaaccddc}, pero no hay acuerdo sobre si debe ser asonante o consonante. En Méri se considerará asonante.
 
 \end{itemize}
 
@@ -69,18 +69,108 @@ Una vez iniciado Méri, se debe elegir la opción correspondiente al tipo de poe
      parcos/ y al perro del florista que me ladra/*
 \end{verbatim}\footnote{Extracto de un soneto de Pedro Mairal}
 \section*{Méri por adentro}
-En esta sección se presentarán con detalle las ideas principales sobre el diseño y funcionamiento de Méri.
+En esta sección se presentarán las ideas principales sobre el diseño y funcionamiento de Méri, detallando cada uno de los módulos involucrados y proveyendo casos de prueba.
 
-\section*{•}
+\subsection*{Paquete Cabal}
+Además de los módulos de Haskell específicos para la resolución del problema en sí, un paquete cabal cuenta con dos archivos más. Por un lado, uno con extensión \textit{.cabal}, el cual contiene metadatos sobre el paquete, incluyendo nombre, versión, descripción, tipo de licencia, dependencias, etcétera. Por el otro, un archivo \textit{Setup.hs}. Es un programa de Haskell de un único módulo que realiza tareas de seteo. En este caso se ha dejado con el seteo estándar que se genera automáticamente al crear un paquete cabal con el comando \textit{cabal init}.  
 
+\subsection*{Common}
+En el módulo \textit{Common.hs} se encuentran los tipos de datos utilizados.
+
+\medskip
+Para representar los poemas, los versos y las sílabas, se utilizan sinónimos de tipos:
+\begin{verbatim}
+    type Verse = String
+    type Poem = [Verse]
+    type Syllable = String
+\end{verbatim}
+
+Para trabajar cómodamente con distintas estrcturas poéticas, se definió un tipo de dato \textit{Metric}, con dos posibles constructores, respondiendo a rima asonante o consonante. Además, este tipo de datos contiene un entero indicando la cantidad de versos correspondiente, y un conjunto de conjuntos de enteros donde se indican qué versos deben rimar entre sí.
+\begin{verbatim}
+ Metric = Asonante Int (Set (Set Int)) | Consonante Int (Set (Set Int))
+\end{verbatim}
+
+Por ejemplo, para referirse a una redondilla se debería utilizar:
+\begin{verbatim}
+    Consonante 4 {{0,3},{1,2}}
+\end{verbatim} \footnote{La notación con corchetes no es válida en Haskell. Es a modo ilustrativo.}
+Se eligió esta tipo de datos con el objetivo de que una métrica dada tenga una única representación posible\footnote{Por esta razón se obvió el uso de listas. Las listas imponen un orden en sus elementos que en este caso no sería apropiado, ya que se desea que decir \textquotedblleft el verso 0 rima con el 3\textquotedblright  sea equivalente a decir \textquotedblleft el verso 3 rima con el 0\textquotedblright.}. Sin embargo, supongamos que se necesita representar una estructura poética de 5 versos con patrón de rima asonante \textit{abbab}. En ese caso, lo natural sería utilizar:
+\begin{verbatim}
+    Asonante 5 {{0,3},{1,2,4}}
+\end{verbatim}
+No obstante, la siguiente sería una representación también válida de la misma estructura poética:
+\begin{verbatim}
+    Asonante 5 {{0,3},{1,2},{1,4}}
+\end{verbatim}
+Para (ayudar a) evitar la multiplicidad de representaciones, se creó la función \textit{checkMetric}, que se encarga de chequear que todos los conjuntos sean disjuntos uno a uno y que ningún elemento del conjunto sea mayor o igual a la cantidad de versos. En caso de que la métrica no cumpla estas propiedades, el programa falla, lanzando un error interno. Para lograr esto se utiliza la mónada \textit{Input}, presentada a continuación.
+\begin{verbatim}
+    data Input a = IN { runInput :: IO (Either String a) }
+\end{verbatim}
+La mónada \textit{Input} es, en esencia, una mónada \textit{IO}, que además de tener efectos de entrada/salida, devuelve un valor \textit{Either}. \\
+La mónada \textit{IO} es necesaria ya que el programa debe informar al usuario el resultado: si el poema ingresado corresponde a la estructura poética elegida o no. Además, en caso de que no corresponda, Méri avisa los fallos que encontró. \\
+La mónada \textit{Either String} es muy útil para el manejo de errores. En este caso, los valores correspondientes al constructor \textit{Left} indicarán un error interno, mientras que el constructor \textit{Right} supone el correcto funcionamiento del programa\footnote{Esto no implica que el poema ingresado matchee con la estructura buscada, sino que el análisis se está llevando a cabo sin errores.}. 
+\subsection*{Functions}
+En el módulo \textit{Functions.hs} se encuentran todas las funciones definidas para el trabajo con poemas y métricas. El algoritmo para separar en sílabas, implementado en la función \textit{syllabifier} está basado en [2].
+\subsection*{Options}
+En el módulo \textit{Options.hs} se escriben todos los programas correspondientes a los distintos esquemas poéticos. En esencia, asocia cada tipo de poema a una instancia del tipo \textit{Metric}. Allí es donde se deben agregar nuevos esquemas si fuera el caso deseado. 
+\subsection*{Parsers}
+En el módulo \textit{Parsers.hs} se encuentra el parser capaz de consumir el poema ingresado por el usuario.
+\subsection*{Main}
+El módulo \textit{Main.hs} es el módulo principal, desde donde se lanza la interacción con el usuario. En caso de agregar un nuevo esquema poético, debería modificarse.
 \subsection*{Casos de prueba}
+A continuación se presentan casos de prueba exitosos para los distintos esquemas de Méri. También se pueden encontrar en el archivo \textit{tests/ok.txt}.
+\begin{verbatim}
+    Cuarteto
+    
+    qué vértigo el abrazo demandante/ los fémures abiertos 
+    y el imán/ la pura gravedad que empuja a adán/ al fondo
+    de la tierra alucinante/*
+
+    Redondilla
+
+    por juramento y por arcos hay un bar/ vacío con la mesa 
+    en la que hablamos/ hace casi dos años y hoy estamos / 
+    sin llamarnos sin vernos sin hablar /*    
+
+    Seguidilla
+    
+    Pues andáis en las palmas/ ángeles santos/que se duerme mi
+    niño /tened los ramos/*
+    
+    Romance
+    
+    Yo voy como un ciego/ por esos caminos./Siempre pensando en 
+    la penita negra/que llevo conmigo./*
+
+    Soneto (este no anda aún porque me falta arreglar una cosita)
+    
+    profunda en la ciruela está la casa/ la casa que no está y 
+    una ciruela/ regresa la voz dulce de la abuela/ otra vez un 
+    jardín y una terraza/ el árbol con las ramas acostadas/ la 
+    pileta con sol y sombra y siesta/ la mesa todavía medio 
+    puesta/ las cigarras cayéndose incendiadas/ los grandes se 
+    entregaron al sopor/ quedó el jardín enorme encandilado/ 
+    hagan la digestión tengan cuidado/ hermanos aburridos de 
+    calor/ trepados al ciruelo rojo oscuro/ escupen los carozos 
+    del futuro/*
+
+    Décima
+    
+    La vida de entre las manos/se nos escurre VELOZ/Se me atraganta
+    la voz/de ver como los humanos/perdemos en hechos vanos/el 
+    sentido de la esencia/haciendo que la presencia/en este terreno
+    hogar/sea un venir, divagar/y perder nuestra existencia/*
+           
+\end{verbatim}
+
+\subsection*{Nuevos esquemas}
 
 \section*{Posibles Extensiones} 
 
 \section*{Bibliografía}
  \begin{itemize}
  	\item Wikipedia
- 	\item A Syllabification Algorithm for Spanish. Heriberto Cuayahuitl
+ 	\item A Syllabification Algorithm for Spanish. Heriberto Cuayahuitl [2]
  \end{itemize}
 
 
