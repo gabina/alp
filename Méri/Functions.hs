@@ -20,8 +20,16 @@ vwa = fromList ['í','ú'] --vocales débiles tildadas
 lr = fromList ['l','r'] --consonantes especiales
 vt = fromList ['á','é','í','ó','ú'] -- vocales tildadas
 
+
+{-Elimina puntuación en general, y pasa a minúsculas
+ b-v
+ c-s-z-}
+neutralString :: String -> String
+neutralString s = Prelude.map Data.Char.toLower (Prelude.filter Data.Char.isLetter s)
+
+{-syllabifier separa una palabra en síalabas-}
 syllabifier :: String -> [String]
-syllabifier s = syllabifier' (Prelude.map Data.Char.toLower s) [] ""
+syllabifier s = syllabifier' (neutralString s) [] ""
 
 {- s es el string a separar en sílabas
    n es la lista de sílabas
@@ -101,15 +109,31 @@ giveTonica s = let s' = concat s;
 f :: Writer [String] [Bool] -> Writer [String] Bool 
 f w = let (boolList,s) = runWriter w in writer (and boolList, s)
 
+{-Cambia la 'z' por 's'-}
+toS :: Char -> Char
+toS 'z' = 's'
+toS c = c
+
+{-Cambia la 'v' por 'b' -}
+toB :: Char -> Char
+toB 'v' = 'b'
+toB c = c
+
+equalSound :: String -> String -> Bool
+equalSound s0 s1 = Prelude.map (toB . toS) s0 == Prelude.map (toB . toS) s1
+
+{-Determina si dos sílabas son iguales fonéticamente -}
 equalSyll :: String -> Int -> (Int,String) -> Writer [String] Bool
-equalSyll s0 n0 (n1,s1) = if s0==s1 then return True 
+equalSyll s0 n0 (n1,s1) = if (equalSound s0 s1) then return True 
 							        else do tell(["Fallo en rima versos "++show(n0)++" y "++show(n1)])
+							                tell(["s0: "++s0++" s1: "++s1])
 							                return False
 
 haveRhyme :: [(Int,String)] -> Writer [String] Bool
 haveRhyme [] = return True
 haveRhyme ((n0,s0):syls) =  f (Control.Monad.Writer.sequence (Prelude.map (equalSyll s0 n0) syls))
 
+{-Modifca la métrica para hacer análisis en caso de que exista algún verso vacío -}
 modifyMetric ::[(Verse,Int)] -> Metric -> Metric
 modifyMetric [] m = m
 modifyMetric ((x,n):xs) metric@(Consonante k ms) = case x of
@@ -118,7 +142,8 @@ modifyMetric ((x,n):xs) metric@(Consonante k ms) = case x of
 modifyMetric ((x,n):xs) metric@(Asonante k ms) = case x of
 											"" -> modifyMetric xs (Asonante k (Set.map (Set.delete n) ms))
 											_ -> modifyMetric xs metric											
-											
+
+{-Determina si existen versos vacíos -}											
 checkEmptyVerse :: (Verse,Int) -> Writer [String] Bool
 checkEmptyVerse ("", n) = do tell(["Verso "++show(n)++" vacío"])
                              return False
