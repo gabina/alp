@@ -1,3 +1,5 @@
+{-# LANGUAGE InstanceSigs #-}
+
 module Common where
 
 import Control.Monad
@@ -12,10 +14,9 @@ type Poem = [Verse]
 type Syllable = String
 data Metric = Asonante Int (Set (Set Int)) | Consonante Int (Set (Set Int))
 
-
 type Command = (String,Input ())
--- Necesario para algunas versiones de GHC (Por esto tambien se importa Control.Monad)
 
+data Input a = IN { runInput :: IO (Either String a) }
 instance Functor Input where 
 
   fmap = liftM
@@ -25,48 +26,37 @@ instance Applicative Input where
   pure = return
   (<*>) = ap
 
----------------------------------------------------------------------------------------
-
-data Input a = IN { runInput :: IO (Either String a) }
-
-
 instance Monad Input where
 
-        return = IN . return . Right
-        x >>= f = IN ( do either_value <- runInput x
-                          case either_value of 
-                                Right a -> runInput (f a)
-                                Left e -> return (Left e))
+		return :: a -> Input a
+		return = IN . return . Right
+		
+		(>>=) :: Input a -> (a -> Input b) -> Input b
+		x >>= f = IN ( do either_value <- runInput x
+		                  case either_value of 
+							Right a -> runInput (f a)
+							Left e -> return (Left e))
 
-class Monad m => IOMonad m where
+{-Funciones útiles para trabajar con Input -}
 
-        f_in :: m String
-        f_out :: String -> m ()
-        f_out_sl :: String -> m ()
-        f_out_list :: [String] -> m ()
+{-f_out imprime algo en pantalla -}							
+f_out :: String -> Input ()
+f_out s = lift (putStrLn s)
 
-instance IOMonad Input where
+{-f_in lee de la pantalla -}		
+f_in :: Input String
+f_in = lift getLine
 
-        f_in = lift (do hFlush stdout
-                        getLine)
-        f_out s = lift (putStrLn s)
-        f_out_sl s = lift (putStr s)
-        f_out_list xs = mapM_ (\s -> f_out "" >> f_out s) xs
+{-f_out_list imprime una lista de strings -}
+f_out_list :: [String] -> Input ()		
+f_out_list xs = mapM_ (\s -> f_out "" >> f_out s) xs
 
-class Monad m => ExeptionMonad m where
-
-        throw :: String -> m ()
-        exit :: String -> m a
-
-instance ExeptionMonad Input where
-
-        throw s = do f_out s
-                     return ()
-        exit s = IN (return (Left s))
-
+{-exit se utiliza para salir de Méri, ya sea por un error interno o por decisión del usuario -}
+exit :: String -> Input a
+exit s = IN (return (Left s))
 
 lift :: IO a -> Input a
-lift m = IN { runInput = m >>= \x -> return (Right x) }
+lift m = IN { runInput = m >>= return . Right }
 
 
 {- Para (ayudar a) evitar la multiplicidad de representaciones, se creó la función checkMetric, que se encarga de chequear que todos los conjuntos sean disjuntos uno a uno y que ningún elemento del conjunto sea mayor o igual a la cantidad de versos.-} 

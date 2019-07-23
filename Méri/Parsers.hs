@@ -5,7 +5,7 @@ import Parsing
 
 
 readPoem :: Parser Poem
-readPoem = do char '*'
+readPoem = do token (char '*')
               return []
               <|>
               do v <- token readVerse
@@ -19,14 +19,7 @@ readVerse =  do c <- token (char '/')
                 do c <- item 
                    l <- readVerse
                    return (c:l)                 
-{-
-readVerse :: Parser Verse
-readVerse =  do c <- item
-                if c == '/'
-                   then return ""
-                   else do l <- readVerse
-                           return (c:l)
--}                           
+                           
 get :: Input Poem
 get = do f_out ("Ingrese un poema. Para finalizar presione *")
          p <- f_in

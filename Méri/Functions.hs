@@ -48,11 +48,6 @@ consonantes l0 l1 = (((member l0 c) && (member l1 lr)) || ((l0 == 'c') && (l1 ==
 hiato :: Char -> Char -> Bool
 hiato l0 l1 = (((member l0 vs) || (member l0 vwa)) && (member l1 vs)) || ((member l0 v) && (member l1 vwa))
 
-
-{-Métrica
-abba -> [[0,3],[1,2]]
--} 
-
 giveVowels :: String -> String
 giveVowels s = Prelude.filter (\x -> member x v) s
 
@@ -63,6 +58,11 @@ giveWord' (x:xs) w = if x == ' ' then w else (giveWord' xs (x:w))
 {-Retorna la última palabra de un verso-}
 giveLastWord :: Verse -> String
 giveLastWord v = giveWord' (reverse v) ""
+
+{- Retorna el string a partir de encontrar un elemento perteneciente al conjunto, teniendo en cuenta la excepció de la "qu" -}
+fromThenOnQU:: String -> Set Char -> String
+fromThenOnQU "" _ = ""
+fromThenOnQU (s:xs) c = if (s=='q') then (tail xs) else if (member s c) then (s:xs) else (fromThenOn xs c)
 
 {- Retorna el string a partir de encontrar un elemento perteneciente al conjunto -}
 fromThenOn:: String -> Set Char -> String
@@ -76,16 +76,15 @@ vocalTildada s = fromThenOn s vt
 
 {- Para palabras sin tildes:
    si termina en n, s o vocal, hay que retornar la penúltima sílaba a partir de la vocal + la última sílaba
-   en caso contrario, hay que retornar desde la vocal de la última sílaba 
-   Rever el caso en que se tiene "qu"-}
+   en caso contrario, hay que retornar desde la vocal de la última sílaba -}
 vocalTonica :: [String] -> String
 vocalTonica xs = let lastSyl = last xs;
 					 lastLetter = last lastSyl;
 					 penSyl = last (init xs);
 					 grave = (member lastLetter v) || (lastLetter == 'n') || (lastLetter == 's')
 				 in case grave of
-					True -> fromThenOn (penSyl++lastSyl) v
-					False -> fromThenOn lastSyl v
+					True -> fromThenOnQU (penSyl++lastSyl) v
+					False -> fromThenOnQU lastSyl v
    
 {-Retorna las sílabas a partir de la vocal tónica -}
 giveTonica :: [String] -> String
@@ -93,17 +92,32 @@ giveTonica s = let s' = concat s;
 				   t = vocalTildada s'
 			   in if t == "" then vocalTonica s else t	
 
+{- Evalúa la lista de booleanos -}
 f :: Writer [String] [Bool] -> Writer [String] Bool 
 f w = let (boolList,s) = runWriter w in writer (and boolList, s)
 
 equalSyll :: String -> Int -> (Int,String) -> Writer [String] Bool
 equalSyll s0 n0 (n1,s1) = if s0==s1 then return True 
-							     else do tell(["Fallo en rima versos "++show(n0)++" y "++show(n1)])
-							             return False
+							        else do tell(["Fallo en rima versos "++show(n0)++" y "++show(n1)])
+							                return False
 
 haveRhyme :: [(Int,String)] -> Writer [String] Bool
 haveRhyme [] = return True
 haveRhyme ((n0,s0):syls) =  f (Control.Monad.Writer.sequence (Prelude.map (equalSyll s0 n0) syls))
+
+modifyMetric ::[(Verse,Int)] -> Metric -> Metric
+modifyMetric [] m = m
+modifyMetric ((x,n):xs) metric@(Consonante k ms) = case x of
+												"" -> modifyMetric xs (Consonante k (Set.map (Set.delete n) ms))
+												_ -> modifyMetric xs metric											
+modifyMetric ((x,n):xs) metric@(Asonante k ms) = case x of
+											"" -> modifyMetric xs (Asonante k (Set.map (Set.delete n) ms))
+											_ -> modifyMetric xs metric											
+											
+checkEmptyVerse :: (Verse,Int) -> Writer [String] Bool
+checkEmptyVerse ("", n) = do tell(["Verso "++show(n)++" vacío"])
+                             return False
+checkEmptyVerse (_,_) = return True
 
 {- Dada una lista de sílabas y una lista de enteros indicando qué sílabas deben rimar, devuelve la lista de las sílabas -}
 takeSyllables' :: [String] -> [Int] -> [(Int,String)]
@@ -113,19 +127,18 @@ takeSyllables' s (x:xs) = (x,(s!!x)) : (takeSyllables' s xs)
 takeSyllables :: [String] -> Set Int -> [(Int,String)]
 takeSyllables s verses = takeSyllables' s (toList verses)
 
-satisfyMetric :: Poem -> Metric -> Writer [String] Bool
-satisfyMetric p (Consonante n ms) = let verses = (mod (length p) n) in 
-									case verses of
-										0 -> do tell (["Cantidad de versos adecuada"])
-										        b <- f (Control.Monad.Writer.sequence (toList (Set.map haveRhyme rhymes)))
-										        if b then do tell (["Satisface rima"])
-										                     return b
-										             else return b	
-										    where syls = Prelude.map (giveTonica . syllabifier . giveLastWord) p
-										          rhymes = Set.map (takeSyllables syls)	ms									
-										_ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
-										        return False
-satisfyMetric p (Asonante n ms) = let verses = (mod (length p) n) in 
+satisfyMetric' :: Poem -> Metric -> Writer [String] Bool
+satisfyMetric' p metric@(Consonante n ms) = do b1 <- f (Control.Monad.Writer.sequence (Prelude.map checkEmptyVerse p'))
+                                               b2 <- f (Control.Monad.Writer.sequence (toList (Set.map haveRhyme rhymes)))
+                                               if b1 && b2 then do tell (["Satisface rima"])
+                                                                   return True
+														   else return False
+													where p' = zip p [0..(n-1)]
+													      syls = Prelude.map (giveTonica . syllabifier . giveLastWord) p
+													      Consonante n' ms' = modifyMetric p' metric
+													      rhymes = Set.map (takeSyllables syls)	ms'									
+												
+satisfyMetric' p (Asonante n ms) = let verses = (mod (length p) n) in 
 									case verses of
 										0 -> do tell (["Cantidad de versos adecuada"])
 										        b <- f (Control.Monad.Writer.sequence (toList (Set.map haveRhyme rhymes)))
@@ -136,10 +149,27 @@ satisfyMetric p (Asonante n ms) = let verses = (mod (length p) n) in
 										          rhymes = Set.map (takeSyllables syls)	ms									
 										_ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
 										        return False
-
-{-"me zumba la poronga fluoerscente/como espada de jedi con estática/me hierve la capacidad espermática /las bolas repletísimas de gente/*" -}
-
-
-
-
-
+										        
+satisfyMetric :: Poem -> Metric -> Writer [String] Bool										        
+satisfyMetric p metric@(Consonante n ms) = let cantVerses = length p;
+							 verses = (mod cantVerses n)
+			    		 in if cantVerses == 0 then return True else case verses of
+                                                    0 -> do tell (["Cantidad de versos adecuada"])
+                                                            b1 <- satisfyMetric' (take n p) metric
+                                                            b <- satisfyMetric (drop n p) metric
+                                                            if b1 && b then do tell (["Satisface rima"])
+                                                                               return True
+                                                                       else return False
+                                                    _ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
+                                                            return False
+satisfyMetric p metric@(Asonante n ms) = let cantVerses = length p;
+							 verses = (mod cantVerses n)
+			    		 in if cantVerses == 0 then return True else case verses of
+                                                    0 -> do tell (["Cantidad de versos adecuada"])
+                                                            b1 <- satisfyMetric' (take n p) metric
+                                                            b <- satisfyMetric (drop n p) metric
+                                                            if b1 && b then do tell (["Satisface rima"])
+                                                                               return True
+                                                                       else return False
+                                                    _ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
+                                                            return False
