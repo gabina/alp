@@ -21,9 +21,7 @@ lr = fromList ['l','r'] --consonantes especiales
 vt = fromList ['á','é','í','ó','ú'] -- vocales tildadas
 
 
-{-Elimina puntuación en general, y pasa a minúsculas
- b-v
- c-s-z-}
+{-Elimina puntuación en general, y pasa a minúsculas-}
 neutralString :: String -> String
 neutralString s = Prelude.map Data.Char.toLower (Prelude.filter Data.Char.isLetter s)
 
@@ -48,7 +46,6 @@ syllabifier' (s0:s1:xs) n t = case (hiato s0 s1) of
 
 {- Determina si dos letras forman un caso especial de consonantes
 c+h - l+l - r+r - consonante+l - consonante+r -}
-
 consonantes :: Char -> Char -> Bool
 consonantes l0 l1 = (((member l0 c) && (member l1 lr)) || ((l0 == 'c') && (l1 == 'h')))
 
@@ -119,14 +116,22 @@ toB :: Char -> Char
 toB 'v' = 'b'
 toB c = c
 
+{-Quita las tildes-}
+sinTildes :: Char -> Char
+sinTildes 'á' = 'a'
+sinTildes 'é' = 'e'
+sinTildes 'í' = 'i'
+sinTildes 'ó' = 'o'
+sinTildes 'ú' = 'u'
+sinTildes c = c
+
 equalSound :: String -> String -> Bool
-equalSound s0 s1 = Prelude.map (toB . toS) s0 == Prelude.map (toB . toS) s1
+equalSound s0 s1 = Prelude.map (sinTildes . toB . toS) s0 == Prelude.map (toB . toS) s1
 
 {-Determina si dos sílabas son iguales fonéticamente -}
 equalSyll :: String -> Int -> (Int,String) -> Writer [String] Bool
 equalSyll s0 n0 (n1,s1) = if (equalSound s0 s1) then return True 
-							        else do tell(["Fallo en rima versos "++show(n0)++" y "++show(n1)])
-							                tell(["s0: "++s0++" s1: "++s1])
+							        else do tell(["Fallo en rima versos "++show(n0)++" y "++show(n1),"Sílabas: "++s0++" "++s1])
 							                return False
 
 haveRhyme :: [(Int,String)] -> Writer [String] Bool

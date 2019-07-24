@@ -10,6 +10,8 @@
 \usepackage{multirow} 
 \usepackage{ amssymb }
 \usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{fancyvrb}
 
 \begin{document} 
 \title{Trabajo Práctico Final\\ Análisis de Lenguajes de Programación} 
@@ -110,13 +112,13 @@ La mónada \textit{Input} es, en esencia, una mónada \textit{IO}, que además d
 La mónada \textit{IO} es necesaria ya que el programa debe informar al usuario el resultado: si el poema ingresado corresponde a la estructura poética elegida o no. Además, en caso de que no corresponda, Méri avisa los fallos que encontró. \\
 La mónada \textit{Either String} es muy útil para el manejo de errores. En este caso, los valores correspondientes al constructor \textit{Left} indicarán un error interno, mientras que el constructor \textit{Right} supone el correcto funcionamiento del programa\footnote{Esto no implica que el poema ingresado matchee con la estructura buscada, sino que el análisis se está llevando a cabo sin errores.}. 
 \subsection*{Functions}
-En el módulo \textit{Functions.hs} se encuentran todas las funciones definidas para el trabajo con poemas y métricas. El algoritmo para separar en sílabas, implementado en la función \textit{syllabifier} está basado en [2].
+En el módulo \textit{Functions.hs} se encuentran todas las funciones definidas para el trabajo con poemas y métricas. El algoritmo para separar en sílabas, implementado en la función \textit{syllabifier}, está basado en [2]. Se realizaron modificaciones a la versión original ya que se encontraron algunos errores.
 \subsection*{Options}
 En el módulo \textit{Options.hs} se escriben todos los programas correspondientes a los distintos esquemas poéticos. En esencia, asocia cada tipo de poema a una instancia del tipo \textit{Metric}. Allí es donde se deben agregar nuevos esquemas si fuera el caso deseado. 
 \subsection*{Parsers}
 En el módulo \textit{Parsers.hs} se encuentra el parser capaz de consumir el poema ingresado por el usuario.
 \subsection*{Main}
-El módulo \textit{Main.hs} es el módulo principal, desde donde se lanza la interacción con el usuario. En caso de agregar un nuevo esquema poético, debería modificarse.
+El módulo \textit{Main.hs} es el módulo principal, desde donde se lanza la interacción con el usuario. En caso de agregar un nuevo esquema poético, debería modificarse para agregar la nueva opción al menú.
 \subsection*{Casos de prueba}
 A continuación se presentan casos de prueba exitosos para los distintos esquemas de Méri. También se pueden encontrar en el archivo \textit{tests/ok.txt}.
 \begin{verbatim}
@@ -163,14 +165,77 @@ A continuación se presentan casos de prueba exitosos para los distintos esquema
            
 \end{verbatim}
 
+Los siguientes casos de prueba producen fallas. También se pueden encontrar en el archivo \textit{tests/error.txt}.
+
+\begin{verbatim}
+    Cuarteto - Verso vacío
+    
+    qué vértigo el abrazo demandante// la pura gravedad que empuja
+    a adán/ al fondo de la tierra alucinante/*
+    
+    Redondilla - Cantidad errónea de versos
+    
+    por juramento y por arcos hay un bar/hace casi dos años y hoy 
+    estamos / sin llamarnos sin vernos sin hablar /* 
+    
+    Seguidilla - Rima faltante
+    
+    Pues andáis en las palmas/ ángeles santos/que se duerme 
+    mi niño /tened las mentiras/*
+\end{verbatim}
 \subsection*{Nuevos esquemas}
+En Méri es muy sencillo incorporar un nuevo esquema de rima, incluso para usuarios sin conocimiento en programación. A continuación se presenta el paso a paso de cómo hacerlo, a través de un ejemplo.
+
+\medskip
+En este caso se agregará el esquema correspondiente a una \textit{sextina}.
+
+\begin{enumerate}
+	\item Tener en claro qué características tiene la estructura poética que se desea incorporar. Si existieran distintas variaciones, se debe optar por una y considerarla como definición. Una sextina está formada por seis versos, endecasílabos u octasílabos, con patrón de rima \textit{aabccb}.
+	\item Expresar el esquema poético en función del tipo de dato \textit{Metric}. En este caso se utilizará el constructor \textit{Consonante}. Recordar que la primera componente indica la cantidad de versos, y el segundo campo es un conjunto correspondiente a qué versos riman entre sí. En el caso de la sextina, la cantidad de versos es seis. El patrón de rima es \textit{aabccb}, lo cual indica que el verso 0 (primer verso) rima con el verso 1, el verso 2 rima con el último (verso 5), y el verso 3 rima con el verso 4\footnote{Los versos se enumeran comenzando desde el cero. Esto es algo usual en la computación.}.Finalmente la representación quedaría de la siguiente forma:
+\begin{Verbatim}[commandchars=\\\{\}]
+   \textcolor{olive}{Consonante} \textcolor{violet}{6} \textcolor{purple}{\textbraceleft\textbraceleft0,1\},\textbraceleft2,5\},\textbraceleft3,4\}\} }
+\end{Verbatim}
+	\item Escribir la métrica con la notación específica de Haskell, como se muestra a continuación. Aquello escrito en negro es lo que debe quedar fijo, las partes en colores se corresponden con lo pensado en el punto anterior.
+	
+\begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{olive}{Consonante} \textcolor{violet}{6} (fromList (Prelude.map fromList \textcolor{purple}{[[0,1],[2,5],[3,4]]}))
+\end{Verbatim}		
+
+	\item Agregar la siguiente función al módulo \textit{Options.hs}, cambiando las palabras en colores, por lo correspondiente según el patrón a incorporar.
+	
+\begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{magenta}{sextina} :: Input ()
+\textcolor{magenta}{sextina} = do f_out "\textcolor{teal}{Sextina}"
+              p <- get
+              m <- checkMetric (\textcolor{olive}{Consonante} \textcolor{violet}{6} (fromList 
+              (Prelude.map fromList \textcolor{purple}{[[0,1],[2,5],[3,4]]})))
+              showAnswer (satisfyMetric p m
+\end{Verbatim}	
+
+	\item Incorporar la nueva opción en el módulo \textit{Main.hs}. Para lograrlo se debe agregar un nuevo elemento a \textit{options}, como se indica a continuación.
+
+\begin{Verbatim}[commandchars=\\\{\}]
+options = [("Cuarteto",cuarteto),("Redondilla",redondilla), 
+("Seguidilla",seguidilla), ("Romance",romance),("Soneto",soneto),
+("Decima",decima),("\textcolor{teal}{Sextina}",\textcolor{magenta}{sextina}),
+("Ayuda",help),("Salir",bye)]
+\end{Verbatim}	
+	
+	\item Correr en una terminal el siguiente comando.
+	\begin{verbatim}
+	    $ cabal run
+	\end{verbatim}
+	El programa debería mostrar la nueva opción en el menú. En caso de que el programa experimente un error interno al comprobar el nuevo patrón, revisar que la métrica haya sido conformada correctamente.
+\end{enumerate}
+
 
 \section*{Posibles Extensiones} 
+La principal extensión para realizar en Méri es agregar un contador de sílabas en versos. De este modo, podría controlarse que además de coincidir la cantidad de versos y los patrones de rima en un poema, la longitud de cada verso sea adecuada. Para lograrlo, debería modificarse la función separadora en sílabas, de modo que siga las reglas de separación en sílabas en poesía castellana.
 
 \section*{Bibliografía}
  \begin{itemize}
  	\item Wikipedia
- 	\item A Syllabification Algorithm for Spanish. Heriberto Cuayahuitl [2]
+ 	\item Heriberto Cuayahuitl.(2004) A Syllabification Algorithm for Spanish.DOI: 10.1007/978-3-540-24630-5\_49 [2]
  \end{itemize}
 
 
