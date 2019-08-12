@@ -1,30 +1,25 @@
 module Parsers where
 
 import Common
-import Parsing
-
+import Text.ParserCombinators.Parsec
+import Text.ParserCombinators.Parsec.Error
 
 readPoem :: Parser Poem
-readPoem = do token (char '*')
-              return []
-              <|>
-              do v <- token readVerse
-                 p <- readPoem
-                 return (v:p)
-                 
-readVerse :: Parser Verse
-readVerse =  do c <- token (char '/')
-                return ""
-                <|>
-                do c <- item 
-                   l <- readVerse
-                   return (c:l)                 
-                           
+readPoem = do char '/' 
+              fail "Se ingresó un verso vacío"
+              <|> do verse <- manyTill anyToken (try (between spaces spaces (char '/')))
+                     (do (char '*')
+                         return [verse]
+                         <|> do rest <- readPoem <?> "\n/ o * faltantes"
+                                return (verse:rest))
+                         
+                                              
 get :: Input Poem
 get = do f_out ("Ingrese un poema. Para finalizar presione *")
          p <- f_in
-         case (parse readPoem p) of
-			[(x,"")] -> do f_out ("Poema leído")
-			               return x
-			_ -> do f_out ("Error al ingresar el poema")
-			        get
+         case (parse readPoem "" p) of
+			Right x -> do f_out ("Poema leído")
+			              return x
+			Left x -> do f_out ("Error al ingresar el poema: "++ (showErrorMessages "" "" "" "" "" (errorMessages x)))
+			             get
+
