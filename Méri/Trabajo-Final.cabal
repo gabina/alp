@@ -19,6 +19,6 @@ executable Trabajo-Final
   main-is:             Main.hs
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.9 && <4.10, mtl >=2.2.2, text >= 1.2.3.1, containers >= 0.5.7.1, parsec >= 3.1.13.0, ghc >=8.0.2
+  build-depends:       base >=4.9 && <4.10, mtl >=2.2.2, text >= 1.2.3.1, containers >= 0.5.7.1, parsec >= 3.1.13.0
   -- hs-source-dirs:      
   default-language:    Haskell2010

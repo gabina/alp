@@ -12,7 +12,7 @@ type Poem = [Verse]
 type Syllable = String
 data Metric = Asonante Int (Set (Set Int)) | Consonante Int (Set (Set Int))
 
-type Command = (String,Input ())
+type Command = (String,Poem -> Input ())
 
 data Input a = IN { runInput :: IO (Either String a) }
 instance Functor Input where 

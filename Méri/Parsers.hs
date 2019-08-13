@@ -14,12 +14,18 @@ readPoem = do char '/'
                                 return (verse:rest))
                          
                                               
-get :: Input Poem
-get = do f_out ("Ingrese un poema. Para finalizar presione *")
-         p <- f_in
+get :: IO Poem
+get = do putStrLn ("Ingrese un poema. Para finalizar presione *")
+         p <- getLine
          case (parse readPoem "" p) of
-			Right x -> do f_out ("Poema leído")
+			Right x -> do putStrLn ("Poema leído")
 			              return x
-			Left x -> do f_out ("Error al ingresar el poema: "++ (showErrorMessages "" "" "" "" "" (errorMessages x)))
+			Left x -> do putStrLn ("Error al ingresar el poema: "++ (showErrorMessages "" "" "" "" "" (errorMessages x)))
 			             get
-
+			             
+getFromFile :: String -> IO Poem
+getFromFile p = case (parse readPoem "" p) of
+					Right x -> do putStrLn ("Poema leído")
+					              return x
+					Left x -> do putStrLn ("Error al ingresar el poema: "++ (showErrorMessages "" "" "" "" "" (errorMessages x)))
+					             fail []

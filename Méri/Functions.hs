@@ -126,7 +126,7 @@ sinTildes 'ú' = 'u'
 sinTildes c = c
 
 equalSound :: String -> String -> Bool
-equalSound s0 s1 = Prelude.map (sinTildes . toB . toS) s0 == Prelude.map (toB . toS) s1
+equalSound s0 s1 = Prelude.map (sinTildes . toB . toS) s0 == Prelude.map (sinTildes . toB . toS) s1
 
 {-Determina si dos sílabas son iguales fonéticamente -}
 equalSyll :: String -> Int -> (Int,String) -> Writer [String] Bool
