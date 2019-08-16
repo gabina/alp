@@ -3,10 +3,6 @@
 \usepackage[utf8]{inputenc}
 \usepackage[spanish]{babel}
 \usepackage{hyperref}
-\usepackage{graphicx}
-\usepackage{wrapfig}
-\usepackage{caption}
-\usepackage{subcaption}
 \usepackage{multirow} 
 \usepackage{ amssymb }
 \usepackage{amsmath}
@@ -46,7 +42,7 @@ Existen distintas clasificaciones de rimas. Según su timbre, se pueden encontra
 \end{itemize}
 
 \subsection*{Patrones de rima}
-A continuación se presentan las características principales de las estructuras poéticas consideradas en el proyecto. Es importante destacar que, en esta versión, el programa no es capaz de identificar cada una de las propiedades, sino que analiza únicamente cantidad de versos y esquemas de rima, dejando para una extensión futura la métrica de cada verso.
+A continuación se presentan las características principales de las estructuras poéticas consideradas en el proyecto. Es importante destacar que, en esta versión, el programa no es capaz de identificar cada una de las propiedades, sino que analiza únicamente cantidad de versos y esquemas de rima, dejando para una extensión futura el estudio de la longitud de los versos.
 \begin{itemize}
 	\item Redondilla: estrofa de cuatro versos, normalmente osctasílabos, con patrón de rima consonante \textit{abba}
 	\item Cuarteto\footnote{Por lo mencionado anteriormente, en esta versión de Méri, la redondilla y el cuarteto utilizan la misma métrica, ya que el programa no está preparado para diferenciar la cantidad de sílabas de cada verso.} estrofa de cuatro versos, normalmente endecasílabos, con patrón de rima consonante \textit{abba}
@@ -58,13 +54,34 @@ A continuación se presentan las características principales de las estructuras
 \end{itemize}
 
 \section*{Instalación y modo de uso}
-Para poder utilizar el software primero se deben descargar los archivos fuentes del siguiente repositorio: \url{https://github.com/gabina/alp}, y tener instalado el sistema de paquetes Cabal\footnote{Cabal es un sistema de paquetes de Haskell que permite a los desarrolladores y usuarios distribuír, usar y reutilizar software fácilmente.}. Luego, deben ejecutarse en una terminal los siguientes comandos:
+\label{uso}
+Para poder utilizar el software primero se deben descargar los archivos fuentes del siguiente repositorio: \url{https://github.com/gabina/alp}, y tener instalado el sistema de paquetes Cabal\footnote{Cabal es un sistema de paquetes de Haskell que permite a los desarrolladores y usuarios distribuír, usar y reutilizar software fácilmente.}. Luego, debe instalarse el programa para poder ejecutarlo, corriendo el siguiente comando en una terminal:
 \begin{verbatim}
       $ cabal install
-      $ cabal run
 \end{verbatim}
 
-Una vez iniciado Méri, se debe elegir la opción correspondiente al tipo de poema que se desea verificar, y luego ingresar el poema. Éste debe ser escrito en una misma línea, separando los versos con una barra (/), e indicando el fin del poema con un asterisco (*). Por ejemplo:
+Méri tiene dos formas de ser utilizado: de forma interactiva o a través de un archivo. Para iniciar Méri interactivamente, debe utilizarse el siguiente comando:
+\begin{verbatim}
+      $ cabal run -- -i
+\end{verbatim}
+Una vez iniciado Méri, se debe elegir la opción correspondiente al tipo de poema que se desea verificar, y luego ingresar el poema. 
+
+\medskip
+
+Si se desea trabajar leyendo el poema desde un archivo \textit{poema.txt}, debe correrse el siguiente comando:
+\begin{verbatim}
+      $ cabal run -- -f poema.txt n
+\end{verbatim}
+\textit{n} será un entero indicando la estructura poética que se quiere verificar, siguiendo la correspondencia que se presenta a continuación: 
+\begin{verbatim}
+2 - Cuarteto
+3 - Redondilla
+4 - Seguidilla
+5 - Romance
+6 - Soneto
+7 - Decima
+\end{verbatim}
+Los poemas a analizar deben ser escritos en una misma línea, separando los versos con una barra (/), e indicando el fin del poema con un asterisco (*). Por ejemplo:
 \begin{verbatim}
      soy el que baja al chino de la cuadra/ con lluvia con 
      burbujas en los charcos/ saludando a porteros medios 
@@ -112,21 +129,23 @@ La mónada \textit{Input} es, en esencia, una mónada \textit{IO}, que además d
 La mónada \textit{IO} es necesaria ya que el programa debe informar al usuario el resultado: si el poema ingresado corresponde a la estructura poética elegida o no. Además, en caso de que no corresponda, Méri avisa los fallos que encontró. \\
 La mónada \textit{Either String} es muy útil para el manejo de errores. En este caso, los valores correspondientes al constructor \textit{Left} indicarán un error interno, mientras que el constructor \textit{Right} supone el correcto funcionamiento del programa\footnote{Esto no implica que el poema ingresado matchee con la estructura buscada, sino que el análisis se está llevando a cabo sin errores.}. 
 \subsection*{Functions}
-En el módulo \textit{Functions.hs} se encuentran todas las funciones definidas para el trabajo con poemas y métricas. El algoritmo para separar en sílabas, implementado en la función \textit{syllabifier}, está basado en [2]. Se realizaron modificaciones a la versión original ya que se encontraron algunos errores.
+En el módulo \textit{Functions.hs} se encuentran todas las funciones definidas para trabajar con poemas y métricas. El algoritmo para separar en sílabas, implementado en la función \textit{syllabifier}, está basado en [2]. Se realizaron modificaciones a la versión original ya que se encontraron algunos errores.
 \subsection*{Options}
 En el módulo \textit{Options.hs} se escriben todos los programas correspondientes a los distintos esquemas poéticos. En esencia, asocia cada tipo de poema a una instancia del tipo \textit{Metric}. Allí es donde se deben agregar nuevos esquemas si fuera el caso deseado. 
 \subsection*{Parsers}
 En el módulo \textit{Parsers.hs} se encuentra el parser capaz de consumir el poema ingresado por el usuario.
 \subsection*{Main}
-El módulo \textit{Main.hs} es el módulo principal, desde donde se lanza la interacción con el usuario. En caso de agregar un nuevo esquema poético, debería modificarse para agregar la nueva opción al menú.
+El módulo \textit{Main.hs} es el módulo principal, desde donde se lanza la interacción con el usuario o se lee el archivo, según corresponda. En caso de agregar un nuevo esquema poético, debería modificarse para agregar la nueva opción al menú.
 \subsection*{Casos de prueba}
-A continuación se presentan casos de prueba exitosos para los distintos esquemas de Méri. También se pueden encontrar en el archivo \textit{tests/ok.txt}.
+A continuación se presentan casos de prueba exitosos para los distintos esquemas de Méri. También se pueden encontrar en los archivo de la carpeta \textit{Ok}, y pueden correrse utilizando el script \textit{pruebaOk.sh}.
 \begin{verbatim}
     Cuarteto
     
-    qué vértigo el abrazo demandante/ los fémures abiertos 
-    y el imán/ la pura gravedad que empuja a adán/ al fondo
-    de la tierra alucinante/*
+    quizá si te quedabas un día más/ o yo fuera más alto más 
+    hermoso/ si fuera un poco menos vergonzoso/ si fuera más 
+    guerrero más audaz/ si yo estuviera al frente de mi vida/ 
+    y no en estos cuarteles del invierno/ si me vistiera un 
+    poco más moderno/si hubiera mantenido la embestida/*
 
     Redondilla
 
@@ -144,7 +163,7 @@ A continuación se presentan casos de prueba exitosos para los distintos esquema
     Yo voy como un ciego/ por esos caminos./Siempre pensando en 
     la penita negra/que llevo conmigo./*
 
-    Soneto (este no anda aún porque me falta arreglar una cosita)
+    Soneto
     
     profunda en la ciruela está la casa/ la casa que no está y 
     una ciruela/ regresa la voz dulce de la abuela/ otra vez un 
@@ -165,7 +184,11 @@ A continuación se presentan casos de prueba exitosos para los distintos esquema
            
 \end{verbatim}
 
-Los siguientes casos de prueba producen fallas. También se pueden encontrar en el archivo \textit{tests/error.txt}.
+Nótese que el caso de cuarteto es exitoso habiéndose ingresado 8 versos en lugar de 4. Esto ocurre debido a que ambas estrofas analizadas cumplen las propiedades del cuarteto. Cualquier patrón poético será aceptado siempre que se ingresen todas estrofas que respeten la métrica a verificar.
+
+\bigskip
+
+Los siguientes casos de prueba producen fallas. También se pueden encontrar en los archivo de la carpeta \textit{Error}, y pueden correrse utilizando el script \textit{pruebaError.sh}.
 
 \begin{verbatim}
     Cuarteto - Verso vacío
@@ -204,27 +227,23 @@ En este caso se agregará el esquema correspondiente a una \textit{sextina}.
 	\item Agregar la siguiente función al módulo \textit{Options.hs}, cambiando las palabras en colores, por lo correspondiente según el patrón a incorporar.
 	
 \begin{Verbatim}[commandchars=\\\{\}]
-\textcolor{magenta}{sextina} :: Input ()
-\textcolor{magenta}{sextina} = do f_out "\textcolor{teal}{Sextina}"
-              p <- get
-              m <- checkMetric (\textcolor{olive}{Consonante} \textcolor{violet}{6} (fromList 
-              (Prelude.map fromList \textcolor{purple}{[[0,1],[2,5],[3,4]]})))
-              showAnswer (satisfyMetric p m
+\textcolor{magenta}{sextina} :: Poem -> Input ()
+\textcolor{magenta}{sextina} p = do f_out "\textcolor{teal}{Sextina}"
+               m <- checkMetric (\textcolor{olive}{Consonante} \textcolor{violet}{6} (fromList 
+               (Prelude.map fromList \textcolor{purple}{[[0,1],[2,5],[3,4]]})))
+               showAnswer (satisfyMetric p m)
 \end{Verbatim}	
 
 	\item Incorporar la nueva opción en el módulo \textit{Main.hs}. Para lograrlo se debe agregar un nuevo elemento a \textit{options}, como se indica a continuación.
 
 \begin{Verbatim}[commandchars=\\\{\}]
-options = [("Cuarteto",cuarteto),("Redondilla",redondilla), 
-("Seguidilla",seguidilla), ("Romance",romance),("Soneto",soneto),
-("Decima",decima),("\textcolor{teal}{Sextina}",\textcolor{magenta}{sextina}),
-("Ayuda",help),("Salir",bye)]
+options = [("Ayuda",help),("Salir",bye),("Cuarteto",cuarteto),
+("Redondilla",redondilla), ("Seguidilla",seguidilla), 
+("Romance",romance), ("Soneto",soneto),("Decima",decima),
+("\textcolor{teal}{Sextina}",\textcolor{magenta}{sextina})]
 \end{Verbatim}	
 	
-	\item Correr en una terminal el siguiente comando.
-	\begin{verbatim}
-	    $ cabal run
-	\end{verbatim}
+	\item Correr el programa como se indica en la sección \nameref{uso}.\\
 	El programa debería mostrar la nueva opción en el menú. En caso de que el programa experimente un error interno al comprobar el nuevo patrón, revisar que la métrica haya sido conformada correctamente.
 \end{enumerate}
 
@@ -236,6 +255,8 @@ La principal extensión para realizar en Méri es agregar un contador de sílaba
  \begin{itemize}
  	\item Wikipedia
  	\item Heriberto Cuayahuitl.(2004) A Syllabification Algorithm for Spanish.DOI: 10.1007/978-3-540-24630-5\_49 [2]
+ 	\item hackage.haskell.org
+ 	\item https://www.haskell.org/cabal/users-guide/developing-packages.html
  \end{itemize}
 
 
