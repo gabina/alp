@@ -7,7 +7,6 @@ import Common
 import Options
 import Parsers
 
---cabal run -- -i
 options = [("Ayuda",help),("Salir",bye),("Cuarteto",cuarteto),("Redondilla",redondilla), ("Seguidilla",seguidilla), ("Romance",romance),("Soneto",soneto), ("Decima",decima)]
  
 printEnum' :: [Command] -> Int -> IO (Either String ())

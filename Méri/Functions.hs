@@ -1,7 +1,6 @@
 module Functions where
 
 import Common
-import Parsing
 import Control.Monad.Writer
 import Data.Char
 import Data.Set
@@ -183,24 +182,20 @@ satisfyMetric'' p metric@(Asonante n ms) =  do b1 <- f (Control.Monad.Writer.seq
 													      Asonante n' ms' = modifyMetric p' metric
 													      rhymes = Set.map (takeSyllables syls)	ms'	
 
-{- -}										        
+{-Corrobora que se satisfagan las métricas en cada estrofa leída-}										        
 satisfyMetric' :: Poem -> Metric -> Int -> Writer [String] Bool										        
 satisfyMetric' p metric@(Consonante n ms) i = let cantVerses = length p;
 			    		                      in if cantVerses == 0 then return True 
 			    		                                            else do tell (["Estrofa "++show(i)])
 			    		                                                    b1 <- satisfyMetric'' (take n p) metric
 			    		                                                    b <- satisfyMetric' (drop n p) metric (i+1)
-			    		                                                    if b1 && b then do tell (["Satisface rima total"])
-			    		                                                                       return True
-																				       else return False
+			    		                                                    return (b1 && b)
 satisfyMetric' p metric@(Asonante n ms) i = let cantVerses = length p;
 			    		                    in if cantVerses == 0 then return True 
 			    		                                          else do tell (["Estrofa "++show(i)])
 			    		                                                  b1 <- satisfyMetric'' (take n p) metric
 			    		                                                  b <- satisfyMetric' (drop n p) metric (i+1)
-			    		                                                  if b1 && b then do tell (["Satisface rima total"])
-			    		                                                                     return True
-														      					     else return False
+			    		                                                  return (b1 && b)
 
 {-Evalúa si el poema es vacío y si la cantidad de versos es múltiplo de lo que indica la métrica buscada.
 En caso de que eso ande bien, evalúa las rimas llamando a satisfyMetric' -}
@@ -211,7 +206,9 @@ satisfyMetric p metric@(Consonante n ms) = let cantVerses = length p;
 			    		                                                 return False 
 			    		                                         else case verses of
                                                     0 -> do tell (["Cantidad de versos adecuada"])
-                                                            satisfyMetric' p metric 0
+                                                            b <- satisfyMetric' p metric 0
+                                                            if b then tell (["Satisface rima total"]) else tell (["No satisface rima total"]) 
+                                                            return b
                                                     _ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
                                                             return False
 satisfyMetric p metric@(Asonante n ms) = let cantVerses = length p;
@@ -220,6 +217,8 @@ satisfyMetric p metric@(Asonante n ms) = let cantVerses = length p;
 			    		                                                 return False 
 			    		                                         else case verses of
                                                     0 -> do tell (["Cantidad de versos adecuada"])
-                                                            satisfyMetric' p metric 0
+                                                            b <- satisfyMetric' p metric 0
+                                                            if b then tell (["Satisface rima total"]) else tell (["No satisface rima total"]) 
+                                                            return b                                                            
                                                     _ -> do tell (["Sobran "++show(verses)++" versos o faltan "++show(n-verses)++" versos"])
                                                             return False
